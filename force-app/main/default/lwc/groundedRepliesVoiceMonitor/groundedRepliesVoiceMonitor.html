@@ -1,12 +1,14 @@
 <template>
     <lightning-card title={cardTitle} icon-name={cardIcon}>
         <div slot="actions" class="slds-grid slds-gutters_x-small">
-            <lightning-button
-                label={actionLabel}
-                variant="neutral"
-                onclick={handleActionClick}
-                disabled={isLoading}
-            ></lightning-button>
+            <template if:true={showActionButton}>
+                <lightning-button
+                    label={actionLabel}
+                    variant="neutral"
+                    onclick={handleActionClick}
+                    disabled={isLoading}
+                ></lightning-button>
+            </template>
             <lightning-button-icon
                 icon-name="utility:refresh"
                 alternative-text="Atualizar"
@@ -40,6 +42,22 @@
             <div class="barra-progresso slds-m-bottom_medium">
                 <div class="barra-progresso-preenchimento" style={progressoStyle}></div>
             </div>
+
+            <template if:true={showDebugPanel}>
+                <div class="debug-panel slds-m-bottom_medium">
+                    <div class="debug-title">Depuracao</div>
+                    <template if:true={debugLogs.length}>
+                        <ul class="debug-list">
+                            <template for:each={debugLogs} for:item="entry">
+                                <li key={entry} class="debug-item">{entry}</li>
+                            </template>
+                        </ul>
+                    </template>
+                    <template if:false={debugLogs.length}>
+                        <p class="slds-text-color_weak">Nenhum evento de depuracao registrado ainda.</p>
+                    </template>
+                </div>
+            </template>
 
             <template if:true={isLoading}>
                 <lightning-spinner size="small" alternative-text="Gerando recomendações"></lightning-spinner>

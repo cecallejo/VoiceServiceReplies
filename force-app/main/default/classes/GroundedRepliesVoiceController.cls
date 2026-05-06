@@ -52,6 +52,17 @@ public with sharing class GroundedRepliesVoiceController {
         return result;
     }
 
+    @AuraEnabled
+    public static String fetchTranscript(Id voiceCallId, String transcriptFlowName) {
+        if (voiceCallId == null) {
+            throw new AuraHandledException('VoiceCall Id is required.');
+        }
+        if (String.isBlank(transcriptFlowName)) {
+            throw new AuraHandledException('Transcript Flow Name is required.');
+        }
+        return runTranscriptFlow(voiceCallId, transcriptFlowName);
+    }
+
     private static String runTranscriptFlow(Id voiceCallId, String flowName) {
         Map<String, Object> inputs = new Map<String, Object>{
             'recordId' => (String) voiceCallId,

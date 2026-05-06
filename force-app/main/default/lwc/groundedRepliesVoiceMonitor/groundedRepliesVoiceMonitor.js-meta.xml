@@ -22,6 +22,8 @@
             <property name="requireStartButton" type="Boolean" label="Require Start Button" default="true" />
             <property name="trackCustomerSpeech" type="Boolean" label="Include Service Rep Messages" default="false" />
             <property name="batchWordThreshold" type="Integer" label="Word Batch Threshold" default="50" />
+            <property name="transcriptPollIntervalMs" type="Integer" label="Transcript Poll Interval (ms)" default="4000" />
+            <property name="debugMode" type="Boolean" label="Modo de depuracao" default="false" />
             <property name="transcriptFlowName" type="String" label="Transcript Flow Name" default="Get_Voice_Call_Transcript" />
             <property name="groundingFlowName" type="String" label="Grounding Flow Name" default="Voice_Grounded_Replies_Bridge" />
         </targetConfig>

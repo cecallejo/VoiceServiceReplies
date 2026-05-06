@@ -1,6 +1,7 @@
 import { LightningElement, api, track } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import generateReplies from '@salesforce/apex/GroundedRepliesVoiceController.generateReplies';
+import fetchTranscript from '@salesforce/apex/GroundedRepliesVoiceController.fetchTranscript';
 
 const STATE_NOT_STARTED = 'not_started';
 const STATE_LISTENING = 'listening';
@@ -16,6 +17,8 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
     @api trackCustomerSpeech = false;
     @api transcriptFlowName = 'Get_Voice_Call_Transcript';
     @api groundingFlowName = 'Voice_Grounded_Replies_Bridge';
+    @api transcriptPollIntervalMs = 4000;
+    @api debugMode = false;
 
     _allowPause;
     _requireStartButton;
@@ -39,15 +42,27 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
     @track isLoading = false;
     @track errorMessage;
     @track lastTranscriptPreview;
+    @track debugLogs = [];
 
     transcriptBuffer = '';
     wordCount = 0;
     processing = false;
+    pollingInFlight = false;
+    pollTimer;
+    lastTranscriptSnapshot = '';
+    lastEventTimestamp = 0;
 
     connectedCallback() {
         if (!this.requireStartButton) {
             this.listeningState = STATE_LISTENING;
+            this.startPolling();
         }
+        this.logDebug('Componente iniciado.');
+    }
+
+    disconnectedCallback() {
+        this.stopPolling();
+        this.logDebug('Componente finalizado.');
     }
 
     get showVoiceToolkit() {
@@ -64,8 +79,13 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
 
     get actionLabel() {
         if (this.listeningState === STATE_NOT_STARTED) return 'Iniciar';
+        if (!this.allowPause) return 'Parar';
         if (this.listeningState === STATE_LISTENING) return 'Pausar';
         return 'Retomar';
+    }
+
+    get showActionButton() {
+        return this.allowPause || this.listeningState === STATE_NOT_STARTED || this.isListening;
     }
 
     get estadoLabel() {
@@ -98,11 +118,28 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
     handleActionClick() {
         if (this.listeningState === STATE_NOT_STARTED) {
             this.listeningState = STATE_LISTENING;
+            this.startPolling();
+            this.logDebug('Monitoramento iniciado manualmente.');
             return;
         }
-        if (!this.allowPause) return;
-        this.listeningState =
-            this.listeningState === STATE_LISTENING ? STATE_PAUSED : STATE_LISTENING;
+        if (!this.allowPause) {
+            this.listeningState = STATE_NOT_STARTED;
+            this.stopPolling();
+            this.transcriptBuffer = '';
+            this.wordCount = 0;
+            this.lastTranscriptSnapshot = '';
+            this.logDebug('Monitoramento parado manualmente.');
+            return;
+        }
+        if (this.listeningState === STATE_LISTENING) {
+            this.listeningState = STATE_PAUSED;
+            this.stopPolling();
+            this.logDebug('Monitoramento pausado.');
+        } else {
+            this.listeningState = STATE_LISTENING;
+            this.startPolling();
+            this.logDebug('Monitoramento retomado.');
+        }
     }
 
     handleVoiceConversationEvent(event) {
@@ -115,10 +152,20 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
             }
             this.transcriptBuffer = '';
             this.wordCount = 0;
+            this.lastTranscriptSnapshot = '';
+            this.startPolling();
+            this.logDebug(`Evento de chamada recebido: ${eventType}.`);
+            return;
+        }
+        if (eventType === 'callended') {
+            this.stopPolling();
+            this.logDebug('Chamada encerrada. Polling interrompido.');
             return;
         }
         if (eventType !== 'transcript') return;
         if (!this.isListening) return;
+        this.lastEventTimestamp = Date.now();
+        this.logDebug('Evento de transcricao recebido via toolkit.');
         this.handleTranscript(detail);
     }
 
@@ -149,6 +196,7 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
         this.wordCount += words;
 
         const threshold = Number(this.batchWordThreshold) || DEFAULT_BATCH_THRESHOLD;
+        this.logDebug(`Delta por evento: +${words} palavras (contador ${this.wordCount}/${threshold}).`);
         if (this.wordCount >= threshold) {
             this.requestRecommendations();
         }
@@ -167,6 +215,7 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
         this.errorMessage = null;
 
         try {
+            this.logDebug(`Disparando recomendacoes (forcado=${force ? 'sim' : 'nao'}).`);
             const response = await generateReplies({
                 voiceCallId: this.recordId,
                 transcriptFlowName: this.transcriptFlowName,
@@ -175,6 +224,7 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
 
             if (!response?.success) {
                 this.errorMessage = response?.errorMessage || 'Nao foi possivel gerar recomendacoes.';
+                this.logDebug(`Falha ao gerar recomendacoes: ${this.errorMessage}`);
             } else {
                 this.recommendations = (response.recommendations || []).map((item, index) => ({
                     ...item,
@@ -190,9 +240,11 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
                 this.lastTranscriptPreview = (response.transcript || '').substring(0, 300);
                 this.transcriptBuffer = '';
                 this.wordCount = 0;
+                this.logDebug(`Recomendacoes geradas com sucesso: ${this.recommendations.length}.`);
             }
         } catch (error) {
             this.errorMessage = error?.body?.message || error?.message || 'Erro inesperado.';
+            this.logDebug(`Erro inesperado: ${this.errorMessage}`);
             this.dispatchEvent(
                 new ShowToastEvent({
                     title: 'Erro',
@@ -207,7 +259,7 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
     }
 
     countWords(text) {
-        return text ? text.split(/\s+/).filter((word) => word.length > 0).length : 0;
+        return this.tokenizeWords(text).length;
     }
 
     decodeHtmlEntities(text) {
@@ -252,6 +304,216 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
                 variant: 'warning'
             })
         );
+    }
+
+    startPolling() {
+        this.stopPolling();
+        const interval = Number(this.transcriptPollIntervalMs) || 4000;
+        this.pollTimer = window.setInterval(() => {
+            this.pollTranscriptFallback();
+        }, interval);
+        this.logDebug(`Polling iniciado a cada ${interval}ms.`);
+    }
+
+    stopPolling() {
+        if (this.pollTimer) {
+            window.clearInterval(this.pollTimer);
+            this.pollTimer = null;
+            this.logDebug('Polling interrompido.');
+        }
+    }
+
+    async pollTranscriptFallback() {
+        if (!this.isListening || this.pollingInFlight || !this.recordId) return;
+
+        // If real-time transcript events are flowing, polling acts as fallback only.
+        const interval = Number(this.transcriptPollIntervalMs) || 4000;
+        if (this.lastEventTimestamp && Date.now() - this.lastEventTimestamp < interval * 2) {
+            return;
+        }
+
+        this.pollingInFlight = true;
+        try {
+            const latestTranscript = await fetchTranscript({
+                voiceCallId: this.recordId,
+                transcriptFlowName: this.transcriptFlowName
+            });
+
+            const current = this.extractRelevantPollingText(latestTranscript);
+            if (!current) return;
+
+            const previous = this.lastTranscriptSnapshot || '';
+            if (current === previous) return;
+
+            const delta = this.extractTranscriptDeltaByWords(previous, current);
+            this.lastTranscriptSnapshot = current;
+            if (!delta) return;
+
+            const words = this.countWords(delta);
+            if (words === 0) return;
+
+            this.transcriptBuffer += (this.transcriptBuffer ? ' ' : '') + delta;
+            this.wordCount += words;
+
+            const threshold = Number(this.batchWordThreshold) || DEFAULT_BATCH_THRESHOLD;
+            this.logDebug(`Delta por polling: +${words} palavras (contador ${this.wordCount}/${threshold}).`);
+            if (this.wordCount >= threshold) {
+                await this.requestRecommendations();
+            }
+        } catch (error) {
+            // Silent fallback error to avoid noisy UX on transient flow issues.
+            // eslint-disable-next-line no-console
+            console.warn('Erro no polling de transcricao:', error);
+            this.logDebug('Erro no polling de transcricao.');
+        } finally {
+            this.pollingInFlight = false;
+        }
+    }
+
+    normalizeTranscript(text) {
+        return (text || '')
+            .replace(/<br\s*\/?>/gi, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    extractRelevantPollingText(rawTranscript) {
+        const normalized = this.normalizeTranscript(rawTranscript);
+        if (!normalized) return '';
+
+        const lines = (rawTranscript || '')
+            .replace(/<br\s*\/?>/gi, '\n')
+            .split(/\r?\n/)
+            .map((line) => line.trim())
+            .filter((line) => line.length > 0);
+
+        // If transcript has no clear line structure, fallback to normalized text.
+        if (!lines.length) {
+            return normalized;
+        }
+
+        const selected = [];
+        lines.forEach((line) => {
+            const cleanLine = this.normalizePollingLine(line);
+            if (!cleanLine) return;
+
+            const actorType = this.detectPollingActor(cleanLine);
+            const isCustomerLine = actorType === 'customer';
+            const isAgentLine = actorType === 'agent';
+
+            // Default: count customer messages only.
+            // Include service rep lines only when configured.
+            if (isCustomerLine) {
+                selected.push(cleanLine);
+                return;
+            }
+            if (isAgentLine) {
+                if (this.trackCustomerSpeech) selected.push(cleanLine);
+                return;
+            }
+
+            // Unknown line format:
+            // - include only when service rep messages are enabled (less restrictive mode)
+            // - otherwise ignore to avoid counting non-customer content.
+            if (this.trackCustomerSpeech) {
+                selected.push(cleanLine);
+            }
+        });
+
+        return this.normalizeTranscript(selected.join(' '));
+    }
+
+    normalizePollingLine(line) {
+        return (line || '')
+            // Remove wrappers like "conversationTranscript (" and trailing ")".
+            .replace(/^conversationTranscript\s*\(/i, '')
+            .replace(/\)\s*$/i, '')
+            // Remove timestamps in formats like "( 13s )", "(1m 23s)", "[00:13]".
+            .replace(/^\(\s*\d+\s*[smh](?:\s+\d+\s*[smh])?\s*\)\s*/i, '')
+            .replace(/^\[?\d{1,2}:\d{2}(?::\d{2})?\]?\s*/i, '')
+            .replace(/^\[?\d{4}-\d{2}-\d{2}[^\]]*\]?\s*/i, '')
+            .trim();
+    }
+
+    detectPollingActor(cleanLine) {
+        // Expected examples:
+        // "Agent: ..."
+        // "EndUser: ..."
+        // "Customer: ..."
+        const actorMatch = cleanLine.match(/^([a-zA-Z_][a-zA-Z0-9_\s-]{0,30})\s*[:\-]/);
+        if (!actorMatch) return 'unknown';
+        const actor = (actorMatch[1] || '').toLowerCase().replace(/\s+/g, '');
+
+        if (
+            actor === 'enduser' ||
+            actor === 'end_user' ||
+            actor === 'customer' ||
+            actor === 'cliente' ||
+            actor === 'caller' ||
+            actor === 'participant' ||
+            actor === 'usuario' ||
+            actor === 'consumidor'
+        ) {
+            return 'customer';
+        }
+
+        if (
+            actor === 'agent' ||
+            actor === 'agente' ||
+            actor === 'servicerep' ||
+            actor === 'atendente' ||
+            actor === 'representante' ||
+            actor === 'advisor'
+        ) {
+            return 'agent';
+        }
+
+        return 'unknown';
+    }
+
+    extractTranscriptDeltaByWords(previous, current) {
+        if (!previous) return current;
+        const prevWords = this.tokenizeWords(previous);
+        const currWords = this.tokenizeWords(current);
+        if (!currWords.length) return '';
+
+        const maxOverlap = Math.min(prevWords.length, currWords.length);
+        let overlap = 0;
+        for (let size = maxOverlap; size > 0; size--) {
+            let match = true;
+            for (let i = 0; i < size; i++) {
+                if (prevWords[prevWords.length - size + i] !== currWords[i]) {
+                    match = false;
+                    break;
+                }
+            }
+            if (match) {
+                overlap = size;
+                break;
+            }
+        }
+
+        const deltaWords = currWords.slice(overlap);
+        return deltaWords.join(' ').trim();
+    }
+
+    tokenizeWords(text) {
+        return (text || '')
+            .toLowerCase()
+            .replace(/[^a-z0-9À-ÖØ-öø-ÿ\s'-]/gi, ' ')
+            .split(/\s+/)
+            .filter((word) => word.length > 0);
+    }
+
+    get showDebugPanel() {
+        return this.debugMode;
+    }
+
+    logDebug(message) {
+        if (!this.debugMode || !message) return;
+        const now = new Date().toLocaleTimeString('pt-BR');
+        const line = `[${now}] ${message}`;
+        this.debugLogs = [line, ...this.debugLogs].slice(0, 30);
     }
 
     handleKnowledgeClick(event) {

@@ -68,6 +68,36 @@
     transition: width 0.2s ease;
 }
 
+.debug-panel {
+    border: 1px solid var(--lwc-colorBorder, #d8dde6);
+    border-radius: 0.5rem;
+    background: var(--lwc-colorBackground, #fff);
+    padding: 0.5rem 0.75rem;
+}
+
+.debug-title {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-weight: 700;
+    color: var(--lwc-colorTextLabel, #444);
+    margin-bottom: 0.35rem;
+}
+
+.debug-list {
+    margin: 0;
+    padding-left: 1rem;
+    max-height: 10rem;
+    overflow: auto;
+}
+
+.debug-item {
+    font-size: 0.72rem;
+    line-height: 1.3;
+    color: var(--lwc-colorTextDefault, #181818);
+    margin-bottom: 0.2rem;
+}
+
 .section-title {
     font-size: 0.8rem;
     text-transform: uppercase;
