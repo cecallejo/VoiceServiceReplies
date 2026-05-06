@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>62.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>Voice Checklist Monitor</masterLabel>
+    <description>Real-time checklist monitoring for Voice Calls and Messaging Sessions with AI integration</description>
+    <capabilities>
+        <capability>lightning__ServiceCloudVoiceToolkitApi</capability>
+    </capabilities>
+    <targets>
+        <target>lightning__RecordPage</target>
+        <target>lightning__AppPage</target>
+        <target>lightning__HomePage</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__RecordPage">
+            <objects>
+                <object>VoiceCall</object>
+                <object>MessagingSession</object>
+            </objects>
+            
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <!-- SHARED PROPERTIES - Apply to both Voice and Messaging       -->
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            
+            <property name="cardTitle" type="String" default="Checklist" 
+                      label="Card Title" 
+                      description="Title displayed in the card header. Leave blank to use checklist name."/>
+            
+            <property name="showChecklistTitle" type="Boolean" default="true" 
+                      label="Use Checklist Name as Title" 
+                      description="When enabled, displays the active checklist template name instead of Card Title"/>
+            
+            <property name="componentHeight" type="Integer" default="400" 
+                      label="Component Height (px)" 
+                      description="Height of the checklist area in pixels"/>
+            
+            <property name="darkMode" type="Boolean" default="false" 
+                      label="Dark Mode" 
+                      description="Enable dark mode styling for the component"/>
+            
+            <property name="instructionFontSize" type="String" default="medium" 
+                      label="Instruction Font Size" 
+                      description="Font size for checklist item instructions" 
+                      datasource="small,medium,large"/>
+            
+            <property name="allowPause" type="Boolean" default="true" 
+                      label="Allow Pause/Resume" 
+                      description="Show the pause/resume button for monitoring"/>
+            
+            <property name="requireStartButton" type="Boolean" default="true" 
+                      label="Require Start Button" 
+                      description="When enabled, agent must click Start to begin monitoring. When disabled, monitoring starts automatically."/>
+            
+            <property name="trackCustomerSpeech" type="Boolean" default="false" 
+                      label="Include Customer Messages" 
+                      description="When enabled, evaluates both agent AND customer speech/messages"/>
+            
+            <property name="batchWordThreshold" type="Integer" default="50" 
+                      label="Word Batch Threshold" 
+                      description="Number of words to accumulate before triggering AI evaluation. Applies to both voice transcripts and chat messages."/>
+            
+            <property name="evaluatorFlowBaseName" type="String" default="Voice_Checklist_Evaluator" 
+                      label="AI Evaluator Flow Name" 
+                      description="Base name for the AI evaluator flow (without _Flow suffix)"/>
+            
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <!-- VOICE-ONLY PROPERTIES - Only affect Voice Call pages        -->
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            
+            <property name="transcriptFlowName" type="String" default="Get_Voice_Call_Transcript" 
+                      label="[Voice] Transcript Flow Name" 
+                      description="Voice only: Name of the flow that retrieves the full voice transcript"/>
+            
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <!-- MESSAGING-ONLY PROPERTIES - Only affect Messaging pages     -->
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            
+            <property name="messagingPollInterval" type="Integer" 
+                      label="[Messaging] Poll Interval (ms)" 
+                      description="Messaging only: How often to check for new messages in milliseconds (e.g., 5000 = 5 seconds). Leave empty or set to 0 to disable auto-checking - agents will need to manually click 'Verify Now' button."/>
+            
+            <property name="messagingTranscriptFlowName" type="String" default="Get_Messaging_Session_Transcript" 
+                      label="[Messaging] Transcript Flow Name" 
+                      description="Messaging only: Name of the flow that retrieves the conversation transcript"/>
+            
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>

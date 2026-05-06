@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>61.0</apiVersion>
+    <isExposed>true</isExposed>
+
+    <targets>
+        <target>lightning__RecordPage</target>
+    </targets>
+
+    <targetConfigs>
+        <targetConfig targets="lightning__RecordPage">
+            <property name="cardTitle" label="Card Title" type="String" default="Sentiment Analysis" />
+            <property name="cardIcon" label="Card Icon" type="String" default="custom:custom97" />
+            <property name="triggerType" label="Trigger Type" type="String" required="true"
+                datasource="Realtime,SessionEnds,Button"
+                default="Realtime" />
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>

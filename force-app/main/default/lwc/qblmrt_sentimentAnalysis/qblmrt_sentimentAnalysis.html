@@ -1,0 +1,24 @@
+<template>
+    <lightning-conversation-toolkit-api lwc:ref="toolkit">
+    </lightning-conversation-toolkit-api>
+
+    <lightning-card title={cardTitle} icon-name={cardIcon}>
+        <div slot="actions">
+            <lightning-layout horizontal-align="end">
+                <lightning-dynamic-icon class="slds-m-right_small" if:true={isLoading} type="eq" option="play"
+                    alternative-text="Analysis in progress"></lightning-dynamic-icon>
+                <lightning-helptext class="slds-m-right_small" if:true={error} icon-name="utility:warning"
+                    content={error} icon-variant="error" alternative-text="error"></lightning-helptext>
+                <lightning-button-icon if:true={isTriggerTypeButton} icon-name="utility:sparkles"
+                    onclick={invokePrompt}></lightning-button-icon>
+            </lightning-layout>
+        </div>
+        <div class="slds-p-horizontal_medium">
+            <span if:true={sentiment} class={badgeTheme}>
+                <lightning-icon class="slds-m-right_x-small" icon-name={sentimentIcon} size="small"
+                    variant="inverse"></lightning-icon>
+                {sentiment}
+            </span>
+        </div>
+    </lightning-card>
+</template>

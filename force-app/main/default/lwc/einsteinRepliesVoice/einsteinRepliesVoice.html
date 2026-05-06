@@ -1,0 +1,74 @@
+<template>
+    <lightning-card title={cardTitle} icon-name={cardIcon}>
+        <div slot="actions">
+            <lightning-layout horizontal-align="end">
+                <lightning-dynamic-icon
+                    if:true={isLoading}
+                    class="slds-m-right_small"
+                    type="eq"
+                    option="play"
+                    alternative-text="Gerando recomendações"
+                ></lightning-dynamic-icon>
+                <lightning-button-icon
+                    icon-name="utility:refresh"
+                    alternative-text="Atualizar"
+                    title="Atualizar"
+                    onclick={refreshSuggestions}
+                ></lightning-button-icon>
+            </lightning-layout>
+        </div>
+
+        <div class="slds-p-horizontal_medium slds-p-vertical_small">
+            <template if:false={hasConfig}>
+                <p class="slds-text-color_weak">
+                    Configure os campos <strong>Grounded Prompt Template</strong> e/ou
+                    <strong>Context Prompt Template</strong> no App Builder.
+                </p>
+            </template>
+
+            <template if:true={error}>
+                <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_warning slds-m-bottom_small">
+                    <span class="slds-assistive-text">Aviso</span>
+                    <h2>{error}</h2>
+                </div>
+            </template>
+
+            <template if:true={hasRecommendations}>
+                <template if:true={groundedRecommendations.length}>
+                    <h3 class="slds-text-title_caps slds-m-bottom_x-small">Grounded recommendations</h3>
+                    <ul class="slds-has-dividers_bottom-space slds-m-bottom_small">
+                        <template for:each={groundedRecommendations} for:item="item">
+                            <li key={item.id} class="slds-item slds-p-vertical_x-small">
+                                <p>{item.text}</p>
+                                <template if:true={item.articleTitle}>
+                                    <p class="slds-text-body_small slds-text-color_weak">
+                                        Artigo: {item.articleTitle}
+                                    </p>
+                                </template>
+                            </li>
+                        </template>
+                    </ul>
+                </template>
+
+                <template if:true={contextRecommendations.length}>
+                    <h3 class="slds-text-title_caps slds-m-bottom_x-small">Context recommendation</h3>
+                    <ul class="slds-has-dividers_bottom-space">
+                        <template for:each={contextRecommendations} for:item="item">
+                            <li key={item.id} class="slds-item slds-p-vertical_x-small">
+                                <p>{item.text}</p>
+                            </li>
+                        </template>
+                    </ul>
+                </template>
+            </template>
+
+            <template if:false={hasRecommendations}>
+                <template if:true={hasConfig}>
+                    <p class="slds-text-color_weak">
+                        Aguardando nova fala do cliente para gerar recomendações.
+                    </p>
+                </template>
+            </template>
+        </div>
+    </lightning-card>
+</template>

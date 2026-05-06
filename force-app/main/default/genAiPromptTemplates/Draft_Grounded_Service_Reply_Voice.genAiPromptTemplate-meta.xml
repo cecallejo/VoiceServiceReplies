@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiPromptTemplate xmlns="http://soap.sforce.com/2006/04/metadata">
+    <activeVersionIdentifier>xlJgOmBaVNAzJ8BzYYwCC2Rb0FSHB/Xx7tqrE4SmMAA=_1</activeVersionIdentifier>
+    <developerName>Draft_Grounded_Service_Reply_Voice</developerName>
+    <masterLabel>Draft Grounded Service Reply - Voice</masterLabel>
+    <templateVersions>
+        <content> Assist the agent to respond to a customer in an ongoing customer service conversation provided below in the CONVERSATION TRANSCRIPT section.
+ It must be for the agent to use in the next turn of the conversation.
+ It must be concise and friendly.
+ It must not repeat things the Agent has already said.
+ The conversation context is provided below in the section CONVERSATION TRANSCRIPT.
+ If the customer&apos;s words may be considered unethical and inappropriate, you must not repeat the inappropriate words in the response.
+ Provide exactly two distinct answers.
+ ###
+ GROUNDING DATA:
+ These are the grounding data relevant to the current conversation:
+ {!$EinsteinSearch:KA_KB_Data_Library_1Cx_dPHb22b7600.results}
+ ###
+ CONVERSATION TRANSCRIPT:
+ {!$Flow:conv_copilot_vc__GetTscpCall.Prompt}
+###
+RESPONSE:
+You should provide an answer following the standard below:
+{
+&quot;responses&quot;: [
+{
+&quot;response&quot;: &quot;&lt;answer 1&gt;&quot;,
+&quot;source&quot;: {
+&quot;sourceRecordId&quot;: &quot;&lt;sourceRecordId&gt;&quot;,
+&quot;dataSourceObject&quot;: &quot;&lt;dataSourceObject&gt;&quot;,
+}
+},
+{
+&quot;response&quot;: &quot;&lt;answer 1&gt;&quot;,
+&quot;source&quot;: {
+&quot;sourceRecordId&quot;: &quot;&lt;sourceRecordId&gt;&quot;,
+&quot;dataSourceObject&quot;: &quot;&lt;dataSourceObject&gt;&quot;,
+}
+}
+]
+}
+</content>
+        <inputs>
+            <apiName>VoiceCall</apiName>
+            <definition>SOBJECT://VoiceCall</definition>
+            <masterLabel>VoiceCall</masterLabel>
+            <referenceName>Input:VoiceCall</referenceName>
+            <required>true</required>
+        </inputs>
+        <primaryModel>sfdc_ai__DefaultGPT5Mini</primaryModel>
+        <status>Published</status>
+        <templateDataProviders>
+            <definition>flow://conv_copilot_vc__GetTscpCall</definition>
+            <description>From the copilot panel, gets the transcript for a voice call sent from an associated prompt template and sends the transcript to the associated prompt template as prompt instructions.</description>
+            <label>Get Transcripts for a Voice Call in Copilot</label>
+            <parameters>
+                <definition>SOBJECT://VoiceCall</definition>
+                <isRequired>false</isRequired>
+                <parameterName>objectToSummarize</parameterName>
+                <valueExpression>{!$Input:VoiceCall}</valueExpression>
+            </parameters>
+            <referenceName>Flow:conv_copilot_vc__GetTscpCall</referenceName>
+        </templateDataProviders>
+        <templateDataProviders>
+            <definition>invocable://getEinsteinRetrieverResults/KA_KB_Data_Library_1Cx_dPHb22b7600</definition>
+            <description>KA_KB_Data_Library</description>
+            <label>KA_KB_Data_Library</label>
+            <parameters>
+                <definition>primitive://String</definition>
+                <isRequired>true</isRequired>
+                <parameterName>searchText</parameterName>
+                <valueExpression>{!$Flow:conv_copilot_vc__GetTscpCall.Prompt}</valueExpression>
+            </parameters>
+            <referenceName>EinsteinSearch:KA_KB_Data_Library_1Cx_dPHb22b7600</referenceName>
+        </templateDataProviders>
+        <versionIdentifier>xlJgOmBaVNAzJ8BzYYwCC2Rb0FSHB/Xx7tqrE4SmMAA=_1</versionIdentifier>
+    </templateVersions>
+    <type>einstein_gpt__flex</type>
+    <visibility>Global</visibility>
+</GenAiPromptTemplate>

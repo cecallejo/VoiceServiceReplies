@@ -1,0 +1,621 @@
+/* ==========================================================================
+   Voice Checklist Monitor v2.0 - Clean Modern Design
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Card Title - Handle Long Names
+   -------------------------------------------------------------------------- */
+lightning-card .slds-card__header-title,
+lightning-card .slds-text-heading_small {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    max-width: 100%;
+    line-height: 1.3;
+}
+
+/* If title is too long, allow truncation with ellipsis */
+lightning-card .slds-card__header-title {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-height: 2.6em; /* Approximately 2 lines */
+}
+
+/* --------------------------------------------------------------------------
+   Template Picker
+   -------------------------------------------------------------------------- */
+.template-picker {
+    min-height: 200px;
+}
+
+.template-description {
+    background: #f3f3f3;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    color: #181818;
+}
+
+.template-description-text {
+    color: #444444;
+    margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Progress Bar
+   -------------------------------------------------------------------------- */
+.progress-container {
+    margin-bottom: 1rem;
+}
+
+.progress-text {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    color: #706e6b;
+}
+
+.completion-percentage {
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: #0176d3;
+}
+
+.progress-bar-container {
+    height: 0.375rem;
+    background-color: #e0e0e0;
+    border-radius: 0.25rem;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background-color: #2e844a;
+    border-radius: 0.25rem;
+    transition: width 0.4s ease-out;
+}
+
+.progress-bar.progress-warning {
+    background-color: #dd7a00;
+}
+
+.progress-secondary-text {
+    font-size: 0.75rem;
+    color: #706e6b;
+    margin-top: 0.25rem;
+}
+
+/* --------------------------------------------------------------------------
+   Checklist Container
+   -------------------------------------------------------------------------- */
+.checklist-container {
+    overflow-y: auto;
+}
+
+/* --------------------------------------------------------------------------
+   Checklist Items - Clean Minimal Style
+   -------------------------------------------------------------------------- */
+.checklist-item {
+    display: flex;
+    flex-direction: column;
+    padding: 0.875rem 1rem;
+    margin-bottom: 0.25rem;
+    background-color: transparent;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.checklist-item:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+/* Completed - green text, subtle background */
+.checklist-item.completed {
+    background-color: rgba(46, 132, 74, 0.08);
+}
+
+/* Not Applicable - muted */
+.checklist-item.not-applicable {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.checklist-item.not-applicable:hover {
+    background-color: transparent;
+}
+
+/* Missed - subtle red background */
+.checklist-item.missed {
+    background-color: rgba(234, 0, 30, 0.08);
+}
+
+/* Child Items */
+.checklist-item.child-item {
+    margin-left: 1.5rem;
+    padding-left: 1rem;
+    border-left: 2px solid #0176d3;
+}
+
+.checklist-item.child-item.completed {
+    border-left-color: #2e844a;
+}
+
+.checklist-item.child-item.not-applicable {
+    border-left-color: #c0c0c0;
+}
+
+.checklist-item.child-item.missed {
+    border-left-color: #ea001e;
+}
+
+/* Conditional Items */
+.checklist-item.conditional-item {
+    border-left: 2px dashed #888;
+}
+
+/* --------------------------------------------------------------------------
+   Item Row Layout
+   -------------------------------------------------------------------------- */
+.item-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.item-icon {
+    flex-shrink: 0;
+}
+
+.item-icon.icon-pending {
+    color: #b0b0b0;
+}
+
+.item-icon.icon-na {
+    color: #a0a0a0;
+}
+
+.expand-icon {
+    color: #888;
+    cursor: pointer;
+    margin-left: auto;
+}
+
+.expand-icon:hover {
+    color: #0176d3;
+}
+
+.item-title {
+    flex-grow: 1;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: #181818;
+}
+
+.item-title.completed {
+    color: #2e844a;
+}
+
+.item-title.not-applicable {
+    color: #888888;
+}
+
+.item-title.missed {
+    color: #c23934;
+}
+
+/* --------------------------------------------------------------------------
+   Badges - Minimal Pill Style
+   -------------------------------------------------------------------------- */
+.slds-badge {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 0.1875rem 0.625rem;
+    border-radius: 1rem;
+    white-space: nowrap;
+}
+
+.badge-verified,
+.badge-auto {
+    background-color: #2e844a;
+    color: #ffffff;
+}
+
+.badge-manual {
+    background-color: #0176d3;
+    color: #ffffff;
+}
+
+.badge-needs-review {
+    background-color: #dd7a00;
+    color: #ffffff;
+}
+
+.badge-incomplete,
+.badge-missed {
+    background-color: #c23934;
+    color: #ffffff;
+}
+
+.badge-na {
+    background-color: #e0e0e0;
+    color: #666666;
+}
+
+/* --------------------------------------------------------------------------
+   Instructions Panel - Expandable
+   -------------------------------------------------------------------------- */
+.item-instructions {
+    margin-top: 0.75rem;
+    margin-left: 2rem;
+    padding: 0.75rem 1rem;
+    background-color: rgba(0, 0, 0, 0.03);
+    border-radius: 0.5rem;
+    border-left: 3px solid #0176d3;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: #444444;
+}
+
+.checklist-item.completed .item-instructions {
+    border-left-color: #2e844a;
+    background-color: rgba(46, 132, 74, 0.05);
+}
+
+.checklist-item.missed .item-instructions {
+    border-left-color: #c23934;
+    background-color: rgba(194, 57, 52, 0.05);
+}
+
+/* --------------------------------------------------------------------------
+   Header & Footer
+   -------------------------------------------------------------------------- */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.header-badges {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.verify-now-header-btn {
+    --slds-c-button-brand-spacing-inline-start: 0.75rem;
+    --slds-c-button-brand-spacing-inline-end: 0.75rem;
+    --slds-c-button-line-height: 1.5rem;
+    font-size: 0.8125rem;
+}
+
+/* --------------------------------------------------------------------------
+   Progress Badge (Word Count / Checking...)
+   -------------------------------------------------------------------------- */
+.progress-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #706e6b;
+    background-color: #f3f3f3;
+    border-radius: 0.25rem;
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Mono', monospace;
+}
+
+.progress-badge-checking {
+    background-color: #fef3cd;
+    color: #8c6900;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* --------------------------------------------------------------------------
+   Manual Mode Info Banner - Compact Version
+   -------------------------------------------------------------------------- */
+.manual-mode-banner-compact {
+    background-color: #eef4ff;
+    border-top: 1px solid #78b0fd;
+    border-bottom: 1px solid #78b0fd;
+    display: flex;
+    align-items: center;
+}
+
+.manual-mode-banner-compact .banner-text-compact {
+    color: #3e3e3c;
+    font-size: 0.75rem;
+    line-height: 1.4;
+}
+
+/* Legacy banner styles (kept for backward compatibility if needed) */
+.manual-mode-banner {
+    background-color: #eef4ff;
+    border: 1px solid #78b0fd;
+    border-radius: 0.5rem;
+}
+
+.manual-mode-banner .banner-content {
+    display: flex;
+    align-items: flex-start;
+}
+
+.manual-mode-banner .banner-text {
+    color: #3e3e3c;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+}
+
+/* --------------------------------------------------------------------------
+   Footer & Buttons
+   -------------------------------------------------------------------------- */
+.refresh-button {
+    --slds-c-button-neutral-color-background: #ffffff;
+    --slds-c-button-neutral-color-border: #dddddd;
+    border-radius: 0.25rem;
+}
+
+.footer-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.slds-badge.slds-theme_success {
+    background-color: #2e844a;
+    color: #ffffff;
+}
+
+.slds-badge.slds-theme_warning {
+    background-color: #dd7a00;
+    color: #ffffff;
+}
+
+.slds-badge.slds-theme_inverse {
+    background-color: #706e6b;
+    color: #ffffff;
+}
+
+/* ==========================================================================
+   DARK MODE - Clean Slate Design
+   ========================================================================== */
+
+.dark-mode {
+    --dm-bg: #1a1f2e;
+    --dm-card: #242938;
+    --dm-border: #3a4050;
+    --dm-text: #ffffff;
+    --dm-text-muted: #a0a8b8;
+    --dm-success: #4ade80;
+    --dm-error: #f87171;
+}
+
+/* Card */
+.dark-mode lightning-card {
+    --slds-c-card-color-background: var(--dm-bg);
+    --slds-c-card-text-color: var(--dm-text);
+    --slds-c-card-heading-text-color: var(--dm-text);
+    --slds-c-card-heading-font-size: 1.125rem;
+}
+
+/* Card Header Title - ensure visibility */
+.dark-mode lightning-card .slds-card__header-title,
+.dark-mode lightning-card .slds-text-heading_small,
+.dark-mode lightning-card .slds-card__header-link {
+    color: var(--dm-text) !important;
+}
+
+/* Template Description */
+.dark-mode .template-description {
+    background: var(--dm-card) !important;
+    color: var(--dm-text) !important;
+}
+
+.dark-mode .template-description-text {
+    color: var(--dm-text) !important;
+}
+
+/* Template Picker Text */
+.dark-mode .template-picker .slds-text-heading_small,
+.dark-mode .template-picker .slds-text-heading_medium,
+.dark-mode .template-picker .slds-text-body_regular {
+    color: var(--dm-text) !important;
+}
+
+/* Progress */
+.dark-mode .progress-text {
+    color: var(--dm-text-muted) !important;
+}
+
+.dark-mode .progress-bar-container {
+    background-color: var(--dm-border) !important;
+}
+
+.dark-mode .completion-percentage {
+    color: var(--dm-text) !important;
+}
+
+.dark-mode .progress-secondary-text {
+    color: var(--dm-text-muted) !important;
+}
+
+/* Progress Badge */
+.dark-mode .progress-badge {
+    background-color: var(--dm-border);
+    color: var(--dm-text-muted);
+}
+
+.dark-mode .progress-badge-checking {
+    background-color: rgba(254, 243, 205, 0.2);
+    color: #fcd34d;
+}
+
+/* Manual Mode Banner */
+.dark-mode .manual-mode-banner {
+    background-color: rgba(0, 112, 210, 0.15);
+    border-color: rgba(120, 176, 253, 0.5);
+}
+
+.dark-mode .manual-mode-banner .banner-text {
+    color: var(--dm-text);
+}
+
+/* Checklist Items */
+.dark-mode .checklist-item {
+    background-color: var(--dm-card) !important;
+    border-radius: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.dark-mode .checklist-item:hover {
+    background-color: #2d3548 !important;
+}
+
+.dark-mode .checklist-item.completed {
+    background-color: rgba(74, 222, 128, 0.1) !important;
+    border-left: 3px solid var(--dm-success);
+}
+
+.dark-mode .checklist-item.not-applicable {
+    background-color: var(--dm-card) !important;
+    opacity: 0.5;
+}
+
+.dark-mode .checklist-item.missed {
+    background-color: rgba(248, 113, 113, 0.1) !important;
+    border-left: 3px solid var(--dm-error);
+}
+
+/* Child Items */
+.dark-mode .checklist-item.child-item {
+    border-left-color: #5eb5ff !important;
+    margin-left: 1rem;
+}
+
+.dark-mode .checklist-item.child-item.completed {
+    border-left-color: var(--dm-success) !important;
+}
+
+.dark-mode .checklist-item.child-item.missed {
+    border-left-color: var(--dm-error) !important;
+}
+
+/* Text */
+.dark-mode .item-title {
+    color: var(--dm-text) !important;
+}
+
+.dark-mode .item-title.completed {
+    color: var(--dm-success) !important;
+}
+
+.dark-mode .item-title.not-applicable {
+    color: var(--dm-text-muted) !important;
+}
+
+.dark-mode .item-title.missed {
+    color: var(--dm-error) !important;
+}
+
+/* Icons */
+.dark-mode .item-icon.icon-pending,
+.dark-mode .item-icon.icon-na {
+    color: var(--dm-text-muted) !important;
+}
+
+.dark-mode .expand-icon {
+    color: var(--dm-text-muted) !important;
+}
+
+.dark-mode .expand-icon:hover {
+    color: #5eb5ff !important;
+}
+
+/* Instructions */
+.dark-mode .item-instructions {
+    background-color: rgba(0, 0, 0, 0.2) !important;
+    color: var(--dm-text) !important;
+    border-left-color: #5eb5ff !important;
+}
+
+.dark-mode .checklist-item.completed .item-instructions {
+    border-left-color: var(--dm-success) !important;
+}
+
+.dark-mode .checklist-item.missed .item-instructions {
+    border-left-color: var(--dm-error) !important;
+}
+
+/* Badges */
+.dark-mode .badge-na {
+    background-color: var(--dm-border) !important;
+    color: var(--dm-text-muted) !important;
+}
+
+/* Footer */
+.dark-mode .footer-actions {
+    border-top-color: var(--dm-border) !important;
+}
+
+/* Refresh Button */
+.dark-mode .refresh-button {
+    --slds-c-button-neutral-color-background: #ffffff !important;
+    --slds-c-button-neutral-color-border: #ffffff !important;
+}
+
+/* --------------------------------------------------------------------------
+   Quick Action Buttons (Insert/Send to Chat)
+   -------------------------------------------------------------------------- */
+.quick-action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-left: auto;
+    margin-right: 0.5rem;
+}
+
+.quick-insert-btn,
+.quick-send-btn {
+    --slds-c-button-icon-color-foreground: #0176d3;
+    transition: transform 0.1s ease;
+}
+
+.quick-insert-btn:hover,
+.quick-send-btn:hover {
+    transform: scale(1.15);
+}
+
+.quick-insert-btn:hover {
+    --slds-c-button-icon-color-foreground: #014486;
+}
+
+.quick-send-btn:hover {
+    --slds-c-button-icon-color-foreground: #2e844a;
+}
+
+/* Dark mode styles for quick action buttons */
+.dark-mode .quick-insert-btn,
+.dark-mode .quick-send-btn {
+    --slds-c-button-icon-color-foreground: #1b96ff;
+}
+
+.dark-mode .quick-insert-btn:hover {
+    --slds-c-button-icon-color-foreground: #78b0fd;
+}
+
+.dark-mode .quick-send-btn:hover {
+    --slds-c-button-icon-color-foreground: #45c65a;
+}

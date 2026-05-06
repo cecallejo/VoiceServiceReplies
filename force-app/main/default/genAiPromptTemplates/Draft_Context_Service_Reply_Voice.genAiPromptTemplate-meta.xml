@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiPromptTemplate xmlns="http://soap.sforce.com/2006/04/metadata">
+    <activeVersionIdentifier>xlJgOmBaVNAzJ8BzYYwCC2Rb0FSHB/Xx7tqrE4SmMAA=_1</activeVersionIdentifier>
+    <developerName>Draft_Context_Service_Reply_Voice</developerName>
+    <masterLabel>Draft Context Service Reply - Voice</masterLabel>
+    <templateVersions>
+        <content> Assist the agent in an ongoing customer service conversation provided in the CONVERSATION TRANSCRIPT section below.
+ If the customer&apos;s words may be considered unethical and inappropriate, you must not repeat the inappropriate words in the response.
+ ###
+ Here are the instructions to follow to generate the output
+ 1. The contextual response does not require any specific information about the organization.
+ 2. The response must naturally fit into the flow of the conversation.
+ 3. The response must be concise and friendly.
+ 4. The response must not repeat things the Agent has already said.
+ Provide exactly one contextual conversational response.
+ ###
+ CONVERSATION TRANSCRIPT:
+{!$Flow:conv_copilot_vc__GetTscpCall.Prompt}
+###RESPONSE
+You should format the response as the following JSON:
+{
+  &quot;recommendations&quot;: [
+    {
+      &quot;text&quot;: &quot;&lt;answer&gt;&quot;
+    }
+  ]
+}
+</content>
+        <inputs>
+            <apiName>VoiceCall</apiName>
+            <definition>SOBJECT://VoiceCall</definition>
+            <masterLabel>VoiceCall</masterLabel>
+            <referenceName>Input:VoiceCall</referenceName>
+            <required>true</required>
+        </inputs>
+        <primaryModel>sfdc_ai__DefaultGPT5Mini</primaryModel>
+        <status>Published</status>
+        <templateDataProviders>
+            <definition>flow://conv_copilot_vc__GetTscpCall</definition>
+            <description>From the copilot panel, gets the transcript for a voice call sent from an associated prompt template and sends the transcript to the associated prompt template as prompt instructions.</description>
+            <label>Get Transcripts for a Voice Call in Copilot</label>
+            <parameters>
+                <definition>SOBJECT://VoiceCall</definition>
+                <isRequired>false</isRequired>
+                <parameterName>objectToSummarize</parameterName>
+                <valueExpression>{!$Input:VoiceCall}</valueExpression>
+            </parameters>
+            <referenceName>Flow:conv_copilot_vc__GetTscpCall</referenceName>
+        </templateDataProviders>
+        <versionIdentifier>xlJgOmBaVNAzJ8BzYYwCC2Rb0FSHB/Xx7tqrE4SmMAA=_1</versionIdentifier>
+    </templateVersions>
+    <type>einstein_gpt__flex</type>
+    <visibility>Global</visibility>
+</GenAiPromptTemplate>

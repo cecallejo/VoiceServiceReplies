@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiPromptTemplate xmlns="http://soap.sforce.com/2006/04/metadata">
+    <activeVersionIdentifier>xlJgOmBaVNAzJ8BzYYwCC2Rb0FSHB/Xx7tqrE4SmMAA=_7</activeVersionIdentifier>
+    <developerName>Get_answer_recommendations_for_Voice</developerName>
+    <masterLabel>Get answer recommendations for Voice</masterLabel>
+    <templateVersions>
+        <content>Dada a transcrição de um atendimento a cliente a seguir, você deverá avaliar a última pergunta feita pelo cliente e buscar uma resposta para ela na base de conhecimento, levando em consideração também o contexto anterior da pergunta, de forma a não repetir respostas já dadas anteriormente. Seja sempre cordial e considere que a sua recomendação será apresentada a um atendente que estará em linha com o cliente por telefone, portanto, o formato da resposta deverá ser compatível com o canal de voz. 
+
+###TRANSCRIÇÃO
+Aqui está a transcrição da ligação: {!$Input:Transcript}
+
+###BASE DE CONHECIMENTO
+Aqui estão os artigos de base de conhecimento sobre os quais a resposta deverá ser embasada: {!$EinsteinSearch:Buscador_de_Knowledge_Retriever_Filtered_1Cx_dPH83a1bc48.results} 
+</content>
+        <inputs>
+            <apiName>Transcript</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>Transcript</masterLabel>
+            <referenceName>Input:Transcript</referenceName>
+            <required>true</required>
+        </inputs>
+        <primaryModel>sfdc_ai__DefaultOpenAIGPT4OmniMini</primaryModel>
+        <status>Published</status>
+        <templateDataProviders>
+            <definition>invocable://getEinsteinRetrieverResults/Buscador_de_Knowledge_Retriever_Filtered_1Cx_dPH83a1bc48</definition>
+            <label>Buscador de Knowledge_Retriever_Filtered</label>
+            <parameters>
+                <definition>primitive://String</definition>
+                <isRequired>true</isRequired>
+                <parameterName>searchText</parameterName>
+                <valueExpression>{!$Input:Transcript}</valueExpression>
+            </parameters>
+            <parameters>
+                <definition>primitive://Integer</definition>
+                <isRequired>false</isRequired>
+                <parameterName>resultCount</parameterName>
+                <valueExpression>5</valueExpression>
+            </parameters>
+            <referenceName>EinsteinSearch:Buscador_de_Knowledge_Retriever_Filtered_1Cx_dPH83a1bc48</referenceName>
+        </templateDataProviders>
+        <versionIdentifier>xlJgOmBaVNAzJ8BzYYwCC2Rb0FSHB/Xx7tqrE4SmMAA=_1</versionIdentifier>
+    </templateVersions>
+    <templateVersions>
+        <content>Dada a transcrição de um atendimento telefônico a um cliente, você deverá avaliar o contexto da conversa e o ponto em que ela está para buscar uma resposta na base de conhecimento. Você deverá fornecer uma resposta em formato que possa ser lida por um atendente de Contact Center ao cliente final. Seja sempre cordial e respeitoso.
+
+###TRANSCRIÇÃO
+Aqui está a transcrição da ligação: {!$Input:Transcript}
+
+###BASE DE CONHECIMENTO
+Aqui estão os artigos de base de conhecimento sobre os quais a resposta deverá ser embasada: {!$EinsteinSearch:Buscador_de_Knowledge_Retriever_Filtered_1Cx_dPH83a1bc48.results} 
+</content>
+        <inputs>
+            <apiName>Transcript</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>Transcript</masterLabel>
+            <referenceName>Input:Transcript</referenceName>
+            <required>true</required>
+        </inputs>
+        <primaryModel>sfdc_ai__DefaultGPT5Mini</primaryModel>
+        <status>Published</status>
+        <templateDataProviders>
+            <definition>invocable://getEinsteinRetrieverResults/Buscador_de_Knowledge_Retriever_Filtered_1Cx_dPH83a1bc48</definition>
+            <label>Buscador de Knowledge_Retriever_Filtered</label>
+            <parameters>
+                <definition>primitive://String</definition>
+                <isRequired>true</isRequired>
+                <parameterName>searchText</parameterName>
+                <valueExpression>{!$Input:Transcript}</valueExpression>
+            </parameters>
+            <parameters>
+                <definition>primitive://Integer</definition>
+                <isRequired>false</isRequired>
+                <parameterName>resultCount</parameterName>
+                <valueExpression>5</valueExpression>
+            </parameters>
+            <referenceName>EinsteinSearch:Buscador_de_Knowledge_Retriever_Filtered_1Cx_dPH83a1bc48</referenceName>
+        </templateDataProviders>
+        <versionIdentifier>xlJgOmBaVNAzJ8BzYYwCC2Rb0FSHB/Xx7tqrE4SmMAA=_2</versionIdentifier>
+    </templateVersions>
+    <templateVersions>
+        <content>Dada a transcrição de um atendimento telefônico a um cliente, você deverá avaliar o contexto da conversa e o ponto em que ela está para buscar uma resposta na base de conhecimento. Você deverá fornecer uma resposta em formato que possa ser lida por um atendente de Contact Center ao cliente final. Seja sempre cordial e respeitoso, e produza uma resposta concisa e objetiva.
+
+###TRANSCRIÇÃO
+Aqui está a transcrição da ligação: {!$Input:Transcript}
+
+###BASE DE CONHECIMENTO
+Aqui estão os artigos de base de conhecimento sobre os quais a resposta deverá ser embasada: {!$EinsteinSearch:Buscador_de_Knowledge_Retriever_Filtered_1Cx_dPH83a1bc48.results} 
+</content>
+        <inputs>
+            <apiName>Transcript</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>Transcript</masterLabel>
+            <referenceName>Input:Transcript</referenceName>
+            <required>true</required>
+        </inputs>
+        <primaryModel>sfdc_ai__DefaultGPT5Mini</primaryModel>
+        <status>Published</status>
+        <templateDataProviders>
+            <definition>invocable://getEinsteinRetrieverResults/Buscador_de_Knowledge_Retriever_Filtered_1Cx_dPH83a1bc48</definition>
+            <label>Buscador de Knowledge_Retriever_Filtered</label>
+            <parameters>
+                <definition>primitive://String</definition>
+                <isRequired>true</isRequired>
+                <parameterName>searchText</parameterName>
+                <valueExpression>{!$Input:Transcript}</valueExpression>
+            </parameters>
+            <parameters>
+                <definition>primitive://Integer</definition>
+                <isRequired>false</isRequired>
+                <parameterName>resultCount</parameterName>
+                <valueExpression>5</valueExpression>
+            </parameters>
+            <referenceName>EinsteinSearch:Buscador_de_Knowledge_Retriever_Filtered_1Cx_dPH83a1bc48</referenceName>
+        </templateDataProviders>
+        <versionIdentifier>xlJgOmBaVNAzJ8BzYYwCC2Rb0FSHB/Xx7tqrE4SmMAA=_3</versionIdentifier>
+    </templateVersions>
+    <templateVersions>
+        <content>Dada a transcrição de um atendimento telefônico a um cliente, você deverá avaliar o contexto da conversa e o ponto em que ela está para buscar uma resposta na base de conhecimento. Você deverá fornecer uma resposta em formato que possa ser lida por um atendente de Contact Center ao cliente final. Seja sempre cordial e respeitoso, e produza uma resposta concisa e objetiva.
+
+###TRANSCRIÇÃO
+Aqui está a transcrição da ligação: {!$Input:Transcript}
+
+###BASE DE CONHECIMENTO
+Aqui estão os artigos de base de conhecimento sobre os quais a resposta deverá ser embasada: {!$EinsteinSearch:Buscador_de_Knowledge_Retriever_Filtered_1Cx_dPH83a1bc48.results} 
+</content>
+        <inputs>
+            <apiName>Transcript</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>Transcript</masterLabel>
+            <referenceName>Input:Transcript</referenceName>
+            <required>true</required>
+        </inputs>
+        <primaryModel>sfdc_ai__DefaultGPT5Mini</primaryModel>
+        <status>Published</status>
+        <templateDataProviders>
+            <definition>invocable://getEinsteinRetrieverResults/Buscador_de_Knowledge_Retriever_Filtered_1Cx_dPH83a1bc48</definition>
+            <label>Buscador de Knowledge_Retriever_Filtered</label>
+            <parameters>
+                <definition>primitive://String</definition>
+                <isRequired>true</isRequired>
+                <parameterName>searchText</parameterName>
+                <valueExpression>{!$Input:Transcript}</valueExpression>
+            </parameters>
+            <parameters>
+                <definition>primitive://Integer</definition>
+                <isRequired>false</isRequired>
+                <parameterName>resultCount</parameterName>
+                <valueExpression>5</valueExpression>
+            </parameters>
+            <referenceName>EinsteinSearch:Buscador_de_Knowledge_Retriever_Filtered_1Cx_dPH83a1bc48</referenceName>
+        </templateDataProviders>
+        <versionIdentifier>xlJgOmBaVNAzJ8BzYYwCC2Rb0FSHB/Xx7tqrE4SmMAA=_4</versionIdentifier>
+    </templateVersions>
+    <templateVersions>
+        <content>Dada a transcrição de um atendimento telefônico a um cliente, você deverá avaliar o contexto da conversa e o ponto em que ela está para buscar uma resposta na base de conhecimento. Você deverá fornecer uma resposta em formato que possa ser lida por um atendente de Contact Center ao cliente final. Seja sempre cordial e respeitoso, e produza uma resposta concisa e objetiva, com no máximo 500 caracteres.
+
+IMPORTANTE: Nunca mencione nomes de marcas ou empresas na resposta produzida
+
+###TRANSCRIÇÃO
+Aqui está a transcrição da ligação: {!$Input:Transcript}
+
+###BASE DE CONHECIMENTO
+Aqui estão os artigos de base de conhecimento sobre os quais a resposta deverá ser embasada: {!$EinsteinSearch:Buscador_de_Knowledge_Retriever_Filtered_1Cx_dPH83a1bc48.results} 
+</content>
+        <inputs>
+            <apiName>Transcript</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>Transcript</masterLabel>
+            <referenceName>Input:Transcript</referenceName>
+            <required>true</required>
+        </inputs>
+        <primaryModel>sfdc_ai__DefaultGPT5Mini</primaryModel>
+        <status>Published</status>
+        <templateDataProviders>
+            <definition>invocable://getEinsteinRetrieverResults/Buscador_de_Knowledge_Retriever_Filtered_1Cx_dPH83a1bc48</definition>
+            <label>Buscador de Knowledge_Retriever_Filtered</label>
+            <parameters>
+                <definition>primitive://String</definition>
+                <isRequired>true</isRequired>
+                <parameterName>searchText</parameterName>
+                <valueExpression>{!$Input:Transcript}</valueExpression>
+            </parameters>
+            <parameters>
+                <definition>primitive://Integer</definition>
+                <isRequired>false</isRequired>
+                <parameterName>resultCount</parameterName>
+                <valueExpression>5</valueExpression>
+            </parameters>
+            <referenceName>EinsteinSearch:Buscador_de_Knowledge_Retriever_Filtered_1Cx_dPH83a1bc48</referenceName>
+        </templateDataProviders>
+        <versionIdentifier>xlJgOmBaVNAzJ8BzYYwCC2Rb0FSHB/Xx7tqrE4SmMAA=_5</versionIdentifier>
+    </templateVersions>
+    <templateVersions>
+        <content>Dada a transcrição de um atendimento telefônico a um cliente, você deverá avaliar o contexto da conversa e o ponto em que ela está para buscar uma resposta na base de conhecimento. Você deverá fornecer uma resposta em formato que possa ser lida por um atendente de Contact Center ao cliente final. Seja sempre cordial e respeitoso, e produza uma resposta concisa e objetiva, com no máximo 500 caracteres.
+
+IMPORTANTE: Nunca mencione nomes de marcas ou empresas na resposta produzida
+
+###TRANSCRIÇÃO
+Aqui está a transcrição da ligação: {!$Input:Transcript}
+
+###BASE DE CONHECIMENTO
+Aqui estão os artigos de base de conhecimento sobre os quais a resposta deverá ser embasada: {!$EinsteinSearch:Buscador_de_Knowledge_Retriever_Filtered_1Cx_dPH83a1bc48.results} 
+</content>
+        <inputs>
+            <apiName>Transcript</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>Transcript</masterLabel>
+            <referenceName>Input:Transcript</referenceName>
+            <required>true</required>
+        </inputs>
+        <primaryModel>sfdc_ai__DefaultGPT5Mini</primaryModel>
+        <status>Published</status>
+        <templateDataProviders>
+            <definition>invocable://getEinsteinRetrieverResults/Buscador_de_Knowledge_Retriever_Filtered_1Cx_dPH83a1bc48</definition>
+            <label>Buscador de Knowledge_Retriever_Filtered</label>
+            <parameters>
+                <definition>primitive://String</definition>
+                <isRequired>true</isRequired>
+                <parameterName>searchText</parameterName>
+                <valueExpression>{!$Input:Transcript}</valueExpression>
+            </parameters>
+            <parameters>
+                <definition>primitive://Integer</definition>
+                <isRequired>false</isRequired>
+                <parameterName>resultCount</parameterName>
+                <valueExpression>5</valueExpression>
+            </parameters>
+            <referenceName>EinsteinSearch:Buscador_de_Knowledge_Retriever_Filtered_1Cx_dPH83a1bc48</referenceName>
+        </templateDataProviders>
+        <versionIdentifier>xlJgOmBaVNAzJ8BzYYwCC2Rb0FSHB/Xx7tqrE4SmMAA=_6</versionIdentifier>
+    </templateVersions>
+    <templateVersions>
+        <content>Dada a transcrição de um atendimento telefônico a um cliente, você deverá avaliar o contexto da conversa e o ponto em que ela está para buscar uma resposta na base de conhecimento. Você deverá fornecer uma resposta em formato que possa ser lida por um atendente de Contact Center ao cliente final. Seja sempre cordial e respeitoso, e produza uma resposta concisa e objetiva, com no máximo 500 caracteres.
+
+IMPORTANTE: Nunca mencione nomes de marcas ou empresas na resposta produzida
+
+###TRANSCRIÇÃO
+Aqui está a transcrição da ligação: {!$Input:Transcript}
+
+###BASE DE CONHECIMENTO
+Aqui estão os artigos de base de conhecimento sobre os quais a resposta deverá ser embasada: {!$EinsteinSearch:Default_KA_KB_Data_Library_Retriever_1Cx_dPH7744f2df.results}
+</content>
+        <inputs>
+            <apiName>Transcript</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>Transcript</masterLabel>
+            <referenceName>Input:Transcript</referenceName>
+            <required>true</required>
+        </inputs>
+        <primaryModel>sfdc_ai__DefaultGPT5Mini</primaryModel>
+        <status>Published</status>
+        <templateDataProviders>
+            <definition>invocable://getEinsteinRetrieverResults/Default_KA_KB_Data_Library_Retriever_1Cx_dPH7744f2df</definition>
+            <description>Default retriever of semantic search KA_KB_Data_Library</description>
+            <label>Default KA_KB_Data_Library Retriever</label>
+            <parameters>
+                <definition>primitive://String</definition>
+                <isRequired>true</isRequired>
+                <parameterName>searchText</parameterName>
+                <valueExpression>{!$Input:Transcript}</valueExpression>
+            </parameters>
+            <referenceName>EinsteinSearch:Default_KA_KB_Data_Library_Retriever_1Cx_dPH7744f2df</referenceName>
+        </templateDataProviders>
+        <versionIdentifier>xlJgOmBaVNAzJ8BzYYwCC2Rb0FSHB/Xx7tqrE4SmMAA=_7</versionIdentifier>
+    </templateVersions>
+    <type>einstein_gpt__flex</type>
+    <visibility>Global</visibility>
+</GenAiPromptTemplate>

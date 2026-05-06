@@ -1,0 +1,220 @@
+<template>
+    <!-- Voice Toolkit API - Only render for Voice Calls -->
+    <template if:true={showVoiceToolkit}>
+        <lightning-service-cloud-voice-toolkit-api
+            lwc:ref="voiceToolkitApi"
+            oncallstarted={handleVoiceConversationEvent}
+            oncallconnected={handleVoiceConversationEvent}
+            oncallended={handleVoiceConversationEvent}
+            ontranscript={handleVoiceConversationEvent}
+            onerror={handleVoiceToolkitError}>
+        </lightning-service-cloud-voice-toolkit-api>
+    </template>
+
+    <div class={cardClass}>
+        <lightning-card title={effectiveTitle} icon-name={cardIcon}>
+            <!-- Loading State -->
+            <template if:true={isLoading}>
+                <div class="slds-p-around_medium">
+                    <lightning-spinner alternative-text="Loading..." size="small"></lightning-spinner>
+                </div>
+            </template>
+
+            <!-- Template Picker (when no checklist exists) -->
+            <template if:true={showTemplatePicker}>
+                <div class="slds-p-around_medium template-picker">
+                    <template if:true={hasTemplates}>
+                        <div class="slds-text-heading_small slds-m-bottom_small">Select a Checklist Template</div>
+                        
+                        <lightning-combobox
+                            name="templateSelect"
+                            label="Template"
+                            placeholder="Choose a template..."
+                            options={templateOptions}
+                            value={selectedTemplateId}
+                            onchange={handleTemplateSelect}>
+                        </lightning-combobox>
+
+                        <template if:true={selectedTemplateDescription}>
+                            <div class="slds-m-top_small template-description">
+                                <p class="slds-text-body_small template-description-text">
+                                    {selectedTemplateDescription}
+                                </p>
+                            </div>
+                        </template>
+
+                        <div class="slds-m-top_medium">
+                            <lightning-button
+                                variant="brand"
+                                label="Apply Template"
+                                onclick={handleApplyTemplate}
+                                disabled={isSelectingTemplate}>
+                            </lightning-button>
+                            <template if:true={isSelectingTemplate}>
+                                <lightning-spinner alternative-text="Applying..." size="small" class="slds-m-left_small"></lightning-spinner>
+                            </template>
+                        </div>
+                    </template>
+
+                    <template if:false={hasTemplates}>
+                        <div class="slds-illustration slds-illustration_small">
+                            <div class="slds-text-longform">
+                                <h3 class="slds-text-heading_medium">No Templates Available</h3>
+                                <p class="slds-text-body_regular">Contact your administrator to create checklist templates.</p>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <!-- Checklist Display -->
+            <template if:true={showChecklist}>
+                <!-- Header Actions -->
+                <div slot="actions" class="header-actions">
+                    <div class="header-badges">
+                        <span class={statusBadgeClass}>{statusBadgeLabel}</span>
+                        
+                        <!-- Verify Now button in manual mode - appears next to MANUAL MODE badge -->
+                        <template if:true={showTopVerifyButton}>
+                            <lightning-button
+                                variant="brand"
+                                label={topVerifyButtonLabel}
+                                icon-name="utility:search"
+                                onclick={handleVerifyChecklist}
+                                disabled={isVerifying}
+                                class="verify-now-header-btn">
+                            </lightning-button>
+                        </template>
+                        
+                        <!-- Progress indicator - shows word count or "Checking..." -->
+                        <template if:true={showProgressIndicator}>
+                            <span class={progressBadgeClass}>{progressDisplay}</span>
+                        </template>
+                    </div>
+                    
+                    <lightning-button-group class="slds-m-left_small">
+                        <template if:true={showPauseButton}>
+                            <lightning-button
+                                variant={pauseButtonVariant}
+                                label={pauseButtonLabel}
+                                icon-name={pauseButtonIconName}
+                                onclick={handlePauseToggle}
+                                disabled={pauseButtonDisabled}>
+                            </lightning-button>
+                        </template>
+                        <lightning-button-icon
+                            icon-name="utility:refresh"
+                            alternative-text="Refresh"
+                            onclick={handleRefresh}
+                            class="refresh-button">
+                        </lightning-button-icon>
+                    </lightning-button-group>
+                </div>
+
+                <!-- Manual Mode: Compact Info Banner (optional, can be removed if not needed) -->
+                <template if:true={showManualModeInfoBanner}>
+                    <div class="manual-mode-banner-compact slds-p-horizontal_medium slds-p-vertical_x-small">
+                        <lightning-icon icon-name="utility:info" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                        <span class="banner-text-compact">{manualModeBannerMessage}</span>
+                    </div>
+                </template>
+
+                <!-- Progress Bar -->
+                <div class="slds-p-horizontal_medium slds-p-top_small">
+                    <div class="progress-container">
+                        <div class="progress-text">
+                            <span>{completionText}</span>
+                            <span class="completion-percentage">{completionPercentage}%</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class={progressBarClass} style={progressBarStyle}></div>
+                        </div>
+                        <div class="progress-secondary-text">{completionSecondaryText}</div>
+                    </div>
+                </div>
+
+                <!-- Checklist Items -->
+                <div class="checklist-container slds-p-around_medium" style={containerStyle}>
+                    <template for:each={checklistItems} for:item="item">
+                        <div key={item.itemId} class={item.computedClass} data-item-id={item.itemId}>
+                            <div class="item-row" onclick={handleItemClick} data-item-id={item.itemId}>
+                                <lightning-icon
+                                    icon-name={item.computedIconName}
+                                    size="x-small"
+                                    variant={item.computedIconVariant}
+                                    class={item.computedIconClass}>
+                                </lightning-icon>
+                                
+                                <span class={item.computedTitleClass}>{item.title}</span>
+                                
+                                <template if:true={item.hasBadge}>
+                                    <span class={item.computedBadgeClass}>{item.computedBadgeLabel}</span>
+                                </template>
+
+                                <!-- Quick Action Buttons (Messaging Sessions only) -->
+                                <template if:true={item.hasQuickActions}>
+                                    <div class="quick-action-buttons">
+                                        <template if:true={item.showQuickInsert}>
+                                            <lightning-button-icon
+                                                icon-name="utility:edit"
+                                                alternative-text="Insert to Chat"
+                                                title="Insert to Chat (Edit before sending)"
+                                                size="small"
+                                                variant="bare"
+                                                class="quick-insert-btn"
+                                                data-item-id={item.itemId}
+                                                onclick={handleQuickInsert}>
+                                            </lightning-button-icon>
+                                        </template>
+                                        <template if:true={item.showQuickSend}>
+                                            <lightning-button-icon
+                                                icon-name="utility:send"
+                                                alternative-text="Send to Chat"
+                                                title="Send to Chat (Immediate)"
+                                                size="small"
+                                                variant="bare"
+                                                class="quick-send-btn"
+                                                data-item-id={item.itemId}
+                                                onclick={handleQuickSend}>
+                                            </lightning-button-icon>
+                                        </template>
+                                    </div>
+                                </template>
+                                
+                                <template if:true={item.hasInstructions}>
+                                    <lightning-icon
+                                        icon-name={item.expandIconName}
+                                        size="xx-small"
+                                        class="expand-icon"
+                                        onclick={handleExpandToggle}
+                                        data-item-id={item.itemId}>
+                                    </lightning-icon>
+                                </template>
+                            </div>
+                            
+                            <template if:true={item.isExpanded}>
+                                <div class="item-instructions" style={instructionFontStyle}>
+                                    <lightning-formatted-rich-text value={item.userInstructions}></lightning-formatted-rich-text>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Footer Actions -->
+                <div class="slds-p-around_medium slds-border_top footer-actions">
+                    <lightning-button
+                        variant={verifyButtonVariant}
+                        label="Verify Checklist"
+                        icon-name="utility:check"
+                        onclick={handleVerifyChecklist}
+                        disabled={verifyButtonDisabled}>
+                    </lightning-button>
+                    <template if:true={isVerifying}>
+                        <lightning-spinner alternative-text="Verifying..." size="small" class="slds-m-left_small"></lightning-spinner>
+                    </template>
+                </div>
+            </template>
+        </lightning-card>
+    </div>
+</template>

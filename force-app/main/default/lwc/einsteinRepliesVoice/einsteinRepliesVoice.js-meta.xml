@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>66.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>Einstein Replies Voice</masterLabel>
+    <description>Realtime voice reply recommendations using Prompt Templates.</description>
+    <targets>
+        <target>lightning__RecordPage</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__RecordPage">
+            <objects>
+                <object>VoiceCall</object>
+            </objects>
+            <property
+                name="groundedPromptTemplate"
+                type="String"
+                label="Grounded Prompt Template"
+                description="API Name do Prompt Template para recomendações grounded (2 sugestões)."
+            />
+            <property
+                name="contextPromptTemplate"
+                type="String"
+                label="Context Prompt Template"
+                description="API Name do Prompt Template para recomendação contextual (1 sugestão)."
+            />
+            <property
+                name="cardTitle"
+                type="String"
+                label="Card Title"
+                default="Einstein Replies Voice"
+            />
+            <property
+                name="cardIcon"
+                type="String"
+                label="Card Icon"
+                default="utility:lightbulb"
+            />
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>

@@ -1,0 +1,121 @@
+.container {
+    background: var(--lwc-colorBackgroundAlt, #f3f3f3);
+}
+
+.status-panel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--lwc-colorBorder, #d8dde6);
+    border-radius: 0.5rem;
+    background: var(--lwc-colorBackground, #fff);
+}
+
+.estado-bloco,
+.contador-bloco {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.estado-label,
+.contador-label {
+    font-size: 0.75rem;
+    color: var(--lwc-colorTextLabel, #444);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-weight: 700;
+}
+
+.contador-valor {
+    font-size: 0.8rem;
+    color: var(--lwc-colorTextDefault, #181818);
+    font-weight: 700;
+}
+
+.semaforo {
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 999px;
+    display: inline-block;
+}
+
+.semaforo.verde {
+    background: #2e844a;
+}
+
+.semaforo.amarelo {
+    background: #dd7a01;
+}
+
+.semaforo.vermelho {
+    background: #ba0517;
+}
+
+.barra-progresso {
+    width: 100%;
+    height: 0.5rem;
+    border-radius: 999px;
+    background: #e5e5e5;
+    overflow: hidden;
+}
+
+.barra-progresso-preenchimento {
+    height: 100%;
+    background: var(--lwc-colorBrand, #0176d3);
+    transition: width 0.2s ease;
+}
+
+.section-title {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--lwc-colorTextLabel, #444);
+    font-weight: 700;
+}
+
+.recommendations-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.recommendation-card {
+    background: var(--lwc-colorBackground, #fff);
+    border: 1px solid var(--lwc-colorBorder, #d8dde6);
+    border-radius: 0.5rem;
+}
+
+.recommendation-text {
+    margin: 0;
+    color: var(--lwc-colorTextDefault, #181818);
+    line-height: 1.4;
+}
+
+.knowledge-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.knowledge-icon {
+    --slds-c-icon-color-foreground-default: var(--lwc-colorTextLink, #0176d3);
+}
+
+.knowledge-link {
+    border: 0;
+    background: transparent;
+    color: var(--lwc-colorTextLink, #0176d3);
+    font-size: 0.75rem;
+    padding: 0;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.knowledge-link:disabled {
+    color: var(--lwc-colorTextWeak, #999);
+    cursor: not-allowed;
+    text-decoration: none;
+}

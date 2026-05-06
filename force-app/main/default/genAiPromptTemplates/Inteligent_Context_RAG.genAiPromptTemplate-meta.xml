@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiPromptTemplate xmlns="http://soap.sforce.com/2006/04/metadata">
+    <developerName>Inteligent_Context_RAG</developerName>
+    <masterLabel>Inteligent Context RAG</masterLabel>
+    <templateVersions>
+        <content>Dada a transcrição de um atendimento telefônico a um cliente, você deverá avaliar o contexto da conversa e o ponto em que ela está para buscar uma resposta na base de conhecimento. Você deverá fornecer uma resposta em formato que possa ser lida por um atendente de Contact Center ao cliente final. Seja sempre cordial e respeitoso, e produza uma resposta concisa e objetiva, com no máximo 500 caracteres.
+
+IMPORTANTE: Nunca mencione nomes de marcas ou empresas na resposta produzida
+
+###TRANSCRIÇÃO
+Aqui está a transcrição da ligação: {!$Input:Transcript}
+
+###BASE DE CONHECIMENTO
+Aqui estão os artigos de base de conhecimento sobre os quais a resposta deverá ser embasada: {!$EinsteinSearch:sfdc_ai__WebRetrievalAction.results}
+</content>
+        <inputs>
+            <apiName>Transcript</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>Transcript</masterLabel>
+            <referenceName>Input:Transcript</referenceName>
+            <required>true</required>
+        </inputs>
+        <primaryModel>sfdc_ai__DefaultGPT5Mini</primaryModel>
+        <status>Draft</status>
+        <templateDataProviders>
+            <definition>invocable://getEinsteinRetrieverResults/sfdc_ai__WebRetrievalAction</definition>
+            <description>Web search retriever retrieves search results from the internet.</description>
+            <label>Web search retriever</label>
+            <parameters>
+                <definition>primitive://String</definition>
+                <isRequired>true</isRequired>
+                <parameterName>searchText</parameterName>
+                <valueExpression>{!$Input:Transcript}</valueExpression>
+            </parameters>
+            <referenceName>EinsteinSearch:sfdc_ai__WebRetrievalAction</referenceName>
+        </templateDataProviders>
+        <versionIdentifier>xlJgOmBaVNAzJ8BzYYwCC2Rb0FSHB/Xx7tqrE4SmMAA=_1</versionIdentifier>
+    </templateVersions>
+    <type>einstein_gpt__flex</type>
+    <visibility>Global</visibility>
+</GenAiPromptTemplate>

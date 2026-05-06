@@ -1,0 +1,91 @@
+<template>
+    <lightning-card title={cardTitle} icon-name={cardIcon}>
+        <div slot="actions" class="slds-grid slds-gutters_x-small">
+            <lightning-button
+                label={actionLabel}
+                variant="neutral"
+                onclick={handleActionClick}
+                disabled={isLoading}
+            ></lightning-button>
+            <lightning-button-icon
+                icon-name="utility:refresh"
+                alternative-text="Atualizar"
+                title="Atualizar agora"
+                onclick={handleManualRefresh}
+                disabled={isLoading}
+            ></lightning-button-icon>
+        </div>
+
+        <template if:true={showVoiceToolkit}>
+            <lightning-service-cloud-voice-toolkit-api
+                ontranscript={handleVoiceConversationEvent}
+                oncallstarted={handleVoiceConversationEvent}
+                oncallconnected={handleVoiceConversationEvent}
+                oncallended={handleVoiceConversationEvent}
+                onerror={handleVoiceToolkitError}
+            ></lightning-service-cloud-voice-toolkit-api>
+        </template>
+
+        <div class="container slds-p-around_medium">
+            <div class="status-panel slds-m-bottom_medium">
+                <div class="estado-bloco">
+                    <span class={estadoClasse}></span>
+                    <span class="estado-label">{estadoLabel}</span>
+                </div>
+                <div class="contador-bloco">
+                    <span class="contador-label">Palavras</span>
+                    <span class="contador-valor">{wordCounter}</span>
+                </div>
+            </div>
+            <div class="barra-progresso slds-m-bottom_medium">
+                <div class="barra-progresso-preenchimento" style={progressoStyle}></div>
+            </div>
+
+            <template if:true={isLoading}>
+                <lightning-spinner size="small" alternative-text="Gerando recomendações"></lightning-spinner>
+            </template>
+
+            <template if:true={errorMessage}>
+                <div class="slds-notify slds-notify_alert slds-theme_error slds-m-bottom_small" role="alert">
+                    <span class="slds-assistive-text">Erro</span>
+                    <h2>{errorMessage}</h2>
+                </div>
+            </template>
+
+            <template if:true={recommendations.length}>
+                <h3 class="section-title slds-m-bottom_small">Recomendacoes de resposta</h3>
+                <ul class="recommendations-list">
+                    <template for:each={recommendations} for:item="item">
+                        <li key={item.rowKey} class="recommendation-card slds-p-around_small slds-m-bottom_small">
+                            <p class="recommendation-text">{item.text}</p>
+                            <template if:true={item.sourceRecordId}>
+                                <div class="knowledge-row slds-m-top_x-small">
+                                    <lightning-icon
+                                        icon-name="utility:knowledge_base"
+                                        size="xx-small"
+                                        alternative-text="Base de conhecimento"
+                                        class="knowledge-icon"
+                                    ></lightning-icon>
+                                    <button
+                                        class="knowledge-link"
+                                        type="button"
+                                        title={item.knowledgeTooltip}
+                                        data-article-id={item.sourceRecordId}
+                                        onclick={handleKnowledgeClick}
+                                        disabled={item.disableKnowledgeButton}
+                                    >
+                                        Base de conhecimento
+                                    </button>
+                                </div>
+                            </template>
+                        </li>
+                    </template>
+                </ul>
+            </template>
+
+            <template if:false={recommendations.length}>
+                <p class="slds-text-color_weak">Aguardando conteúdo para gerar recomendações grounded.</p>
+            </template>
+        </div>
+    </lightning-card>
+</template>
