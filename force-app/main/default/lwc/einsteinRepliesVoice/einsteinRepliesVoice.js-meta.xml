@@ -34,7 +34,7 @@
                 name="cardIcon"
                 type="String"
                 label="Card Icon"
-                default="utility:lightbulb"
+                default="utility:knowledge_base"
             />
         </targetConfig>
     </targetConfigs>

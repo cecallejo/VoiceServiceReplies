@@ -7,7 +7,7 @@ export default class EinsteinRepliesVoice extends LightningElement {
     @api recordId;
     @api groundedPromptTemplate;
     @api contextPromptTemplate;
-    @api cardTitle = 'Einstein Replies Voice';
+    @api cardTitle = 'Recomendações de respostas';
     @api cardIcon = 'utility:lightbulb';
 
     @track groundedRecommendations = [];

@@ -8,8 +8,8 @@
       "path": "package-src",
       "default": false,
       "package": "VoiceServiceReplies",
-      "versionName": "ver 1.0",
-      "versionNumber": "1.0.0.NEXT"
+      "versionName": "ver 2.0",
+      "versionNumber": "2.0.0.NEXT"
     }
   ],
   "name": "voice_service_replies",

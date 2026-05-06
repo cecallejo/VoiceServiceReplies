@@ -111,13 +111,22 @@ public with sharing class GroundedRepliesVoiceController {
         return null;
     }
 
+    @TestVisible
     private static List<RecommendationItem> parseRecommendations(String rawResponse) {
         List<RecommendationItem> output = new List<RecommendationItem>();
         if (String.isBlank(rawResponse)) {
             return output;
         }
 
-        Object parsed = JSON.deserializeUntyped(rawResponse);
+        Object parsed;
+        try {
+            parsed = JSON.deserializeUntyped(rawResponse);
+        } catch (Exception ignored) {
+            RecommendationItem fallback = new RecommendationItem();
+            fallback.text = rawResponse;
+            output.add(fallback);
+            return output;
+        }
         if (!(parsed instanceof Map<String, Object>)) {
             RecommendationItem fallback = new RecommendationItem();
             fallback.text = rawResponse;
