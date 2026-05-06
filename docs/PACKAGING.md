@@ -70,8 +70,8 @@ sf package install \
 
 Opcao via URL do instalador (pacote base com LWC + Apex):
 
-- Producao/Developer Edition: `https://login.salesforce.com/packaging/installPackage.apexp?p0=04tHp000001Rd0wIAC`
-- Sandbox: `https://test.salesforce.com/packaging/installPackage.apexp?p0=04tHp000001Rd0wIAC`
+- Producao/Developer Edition: `https://login.salesforce.com/packaging/installPackage.apexp?p0=04tHp000001Rd16IAC`
+- Sandbox: `https://test.salesforce.com/packaging/installPackage.apexp?p0=04tHp000001Rd16IAC`
 
 > Importante: a URL instala apenas o pacote base. Para completar a instalacao (Flows + Prompt), rode o deploy complementar via `manifest/post-install-package.xml` ou use `./scripts/install_full_asset.sh <alias-org-destino>`.
 

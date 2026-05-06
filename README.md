@@ -199,8 +199,8 @@ Para instalar tudo em uma org destino (pacote promovido + flows + prompt):
 
 URL direta do instalador do pacote (LWC + Apex):
 
-- Producao/Developer Edition: `https://login.salesforce.com/packaging/installPackage.apexp?p0=04tHp000001Rd0wIAC`
-- Sandbox: `https://test.salesforce.com/packaging/installPackage.apexp?p0=04tHp000001Rd0wIAC`
+- Producao/Developer Edition: `https://login.salesforce.com/packaging/installPackage.apexp?p0=04tHp000001Rd16IAC`
+- Sandbox: `https://test.salesforce.com/packaging/installPackage.apexp?p0=04tHp000001Rd16IAC`
 
 Observacao: essa URL instala o pacote base (componentes como LWC e Apex). Para instalar tambem os metadados complementares (Flows + Prompt), execute o script acima ou faça o deploy do `manifest/post-install-package.xml`.
 

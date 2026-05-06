@@ -13,7 +13,7 @@ if [[ $# -lt 1 ]]; then
 fi
 
 TARGET_ORG="$1"
-PACKAGE_VERSION_ID="04tHp000001Rd0wIAC"
+PACKAGE_VERSION_ID="04tHp000001Rd16IAC"
 POST_INSTALL_MANIFEST="manifest/post-install-package.xml"
 
 echo "==> Instalando pacote promovido na org: ${TARGET_ORG}"

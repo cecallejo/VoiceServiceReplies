@@ -14,7 +14,9 @@
   ],
   "name": "voice_service_replies",
   "packageAliases": {
-    "VoiceServiceReplies": "0HoHp000000bn0mKAA"
+    "VoiceServiceReplies": "0HoHp000000bn0mKAA",
+    "VoiceServiceReplies@2.0.0-1": "04tHp000001Rd11IAC",
+    "VoiceServiceReplies@2.0.0-2": "04tHp000001Rd16IAC"
   },
   "namespace": "",
   "sfdcLoginUrl": "https://login.salesforce.com",

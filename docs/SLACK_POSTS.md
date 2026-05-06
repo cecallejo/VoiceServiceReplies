@@ -17,8 +17,8 @@ Pessoal, disponibilizei o **Voice Service Replies**, um componente reutilizavel 
 
 **Instalacao em ORG**
 - Pacote base (LWC + Apex)
-  - Prod/DE: `https://login.salesforce.com/packaging/installPackage.apexp?p0=04tHp000001Rd0wIAC`
-  - Sandbox: `https://test.salesforce.com/packaging/installPackage.apexp?p0=04tHp000001Rd0wIAC`
+  - Prod/DE: `https://login.salesforce.com/packaging/installPackage.apexp?p0=04tHp000001Rd16IAC`
+  - Sandbox: `https://test.salesforce.com/packaging/installPackage.apexp?p0=04tHp000001Rd16IAC`
 - Instalacao completa (pacote + Flows + Prompt):
   - `./scripts/install_full_asset.sh <alias-org-destino>`
 
@@ -45,8 +45,8 @@ Team, I have published **Voice Service Replies**, a reusable `VoiceCall` compone
 
 **Org installation**
 - Base package (LWC + Apex)
-  - Prod/DE: `https://login.salesforce.com/packaging/installPackage.apexp?p0=04tHp000001Rd0wIAC`
-  - Sandbox: `https://test.salesforce.com/packaging/installPackage.apexp?p0=04tHp000001Rd0wIAC`
+  - Prod/DE: `https://login.salesforce.com/packaging/installPackage.apexp?p0=04tHp000001Rd16IAC`
+  - Sandbox: `https://test.salesforce.com/packaging/installPackage.apexp?p0=04tHp000001Rd16IAC`
 - Full installation (package + Flows + Prompt):
   - `./scripts/install_full_asset.sh <target-org-alias>`
 
