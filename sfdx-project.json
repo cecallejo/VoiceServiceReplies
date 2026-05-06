@@ -6,6 +6,7 @@
     }
   ],
   "name": "voice_service_replies",
+  "packageAliases": {},
   "namespace": "",
   "sfdcLoginUrl": "https://login.salesforce.com",
   "sourceApiVersion": "65.0"
