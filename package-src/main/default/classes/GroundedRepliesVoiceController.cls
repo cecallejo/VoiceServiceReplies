@@ -164,7 +164,6 @@ public with sharing class GroundedRepliesVoiceController {
             if (String.isBlank(item.sourceRecordId)) {
                 continue;
             }
-            // Knowledge Article Version Ids start with ka0.
             if (!item.sourceRecordId.startsWith('ka0')) {
                 continue;
             }
@@ -191,7 +190,6 @@ public with sharing class GroundedRepliesVoiceController {
                 }
             }
         } catch (Exception ignored) {
-            // Knowledge can be disabled in some orgs. Keep responses without title enrichment.
             return;
         }
 

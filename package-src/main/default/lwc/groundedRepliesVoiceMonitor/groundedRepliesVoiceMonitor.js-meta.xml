@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>66.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>Grounded Replies Voice Monitor</masterLabel>
+    <description>Realtime grounded voice replies driven by transcript and grounding flows.</description>
+    <capabilities>
+        <capability>lightning__ServiceCloudVoiceToolkitApi</capability>
+    </capabilities>
+    <targets>
+        <target>lightning__RecordPage</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__RecordPage">
+            <property name="cardTitle" type="String" label="Card Title" default="Recomendacoes de respostas" />
+            <property name="cardIcon" type="String" label="Card Icon" default="utility:lightbulb" />
+            <property name="componentHeight" type="Integer" label="Component Height (px)" default="400" />
+            <property name="allowPause" type="Boolean" label="Allow Pause/Resume" default="true" />
+            <property name="requireStartButton" type="Boolean" label="Require Start Button" default="true" />
+            <property name="trackCustomerSpeech" type="Boolean" label="Include Service Rep Messages" default="false" />
+            <property name="batchWordThreshold" type="Integer" label="Word Batch Threshold" default="50" />
+            <property name="transcriptPollIntervalMs" type="Integer" label="Transcript Poll Interval (ms)" default="4000" />
+            <property name="debugMode" type="Boolean" label="Modo de depuracao" default="false" />
+            <property name="transcriptFlowName" type="String" label="Transcript Flow Name" default="Get_Voice_Call_Transcript" />
+            <property name="groundingFlowName" type="String" label="Grounding Flow Name" default="Voice_Grounded_Replies_Bridge" />
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>

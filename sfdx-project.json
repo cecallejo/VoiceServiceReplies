@@ -3,10 +3,19 @@
     {
       "path": "force-app",
       "default": true
+    },
+    {
+      "path": "package-src",
+      "default": false,
+      "package": "VoiceServiceReplies",
+      "versionName": "ver 1.0",
+      "versionNumber": "1.0.0.NEXT"
     }
   ],
   "name": "voice_service_replies",
-  "packageAliases": {},
+  "packageAliases": {
+    "VoiceServiceReplies": "0HoHp000000bn0mKAA"
+  },
   "namespace": "",
   "sfdcLoginUrl": "https://login.salesforce.com",
   "sourceApiVersion": "65.0"
