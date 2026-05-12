@@ -24,6 +24,8 @@ Componente reutilizavel para recomendacoes de resposta em tempo real em `VoiceCa
   - Bridge para executar Prompt Template e retornar `promptResponse`.
 - `force-app/main/default/genAiPromptTemplates/Grounded_Service_Reply_Voice_Monitor.genAiPromptTemplate-meta.xml`
   - Prompt grounded com retorno estruturado em JSON.
+- `force-app/main/default/genAiPromptTemplates/OnCall_Sentiment_Analysis.genAiPromptTemplate-meta.xml`
+  - Prompt de analise de sentimento do cliente (`positivo|neutro|negativo`).
 
 ### Fluxo em runtime
 
@@ -51,6 +53,7 @@ Propriedades principais:
 - `Modo de depuracao`: mostra painel de logs no card.
 - `Transcript Flow Name`: default `Get_Voice_Call_Transcript`.
 - `Grounding Flow Name`: default `Voice_Grounded_Replies_Bridge`.
+- `Sentiment Prompt Name`: default `OnCall_Sentiment_Analysis`.
 
 Comportamento do botao:
 
@@ -89,17 +92,19 @@ O parser espera o formato:
 - Flow `Get_Voice_Call_Transcript` ativo.
 - Flow `Voice_Grounded_Replies_Bridge` ativo.
 - Prompt Template `Grounded_Service_Reply_Voice_Monitor` publicado e com versao ativa.
+- Prompt Template `OnCall_Sentiment_Analysis` publicado e com versao ativa.
 
-## Configuracao detalhada de Flow e Prompt
+## Configuracao detalhada de Flow e Prompts
 
-Esta secao e a referencia para quando voce precisar ajustar o Flow e/ou o Prompt sem quebrar o funcionamento do pacote.
+Esta secao e a referencia para quando voce precisar ajustar o Flow e/ou os Prompts sem quebrar o funcionamento do pacote.
 
-### 1) Contrato entre Flow e Prompt (obrigatorio)
+### 1) Contrato entre Flow e Prompts (obrigatorio)
 
 O componente e o Apex assumem o seguinte contrato:
 
 - Flow de grounding: `Voice_Grounded_Replies_Bridge`
 - Prompt Template: `Grounded_Service_Reply_Voice_Monitor`
+- Prompt Template de sentimento: `OnCall_Sentiment_Analysis`
 - Input do prompt no Flow: `Input:Transcript`
 - Output do Flow para Apex/LWC: variavel `promptResponse` (String, output=true)
 
@@ -132,7 +137,7 @@ Checklist de validacao do Flow:
 - A variavel `promptResponse` esta marcada como output.
 - O Flow esta ativo na org destino.
 
-### 3) Como configurar o Prompt `Grounded_Service_Reply_Voice_Monitor`
+### 3) Como configurar os Prompts
 
 No Prompt Builder:
 
@@ -145,20 +150,21 @@ No Prompt Builder:
 4. Garanta que o conteudo do prompt instrui retorno em JSON no formato esperado.
 5. Publique uma versao e deixe essa versao como ativa.
 
-Checklist de validacao do Prompt:
+Checklist de validacao dos Prompts:
 
 - Existe versao `Published`.
 - O template tem `activeVersionIdentifier` valido.
 - O input `Input:Transcript` existe e e obrigatorio.
 - O JSON de resposta segue o contrato em "Contrato do Prompt (JSON esperado)".
+- No prompt `OnCall_Sentiment_Analysis`, o retorno contem `{"sentiment":"positivo|neutro|negativo"}`.
 
 ### 4) Ordem correta de implantacao (essencial)
 
 Para evitar erro de dependencia em org destino:
 
 1. Instale o pacote promovido (04t).
-2. Deploy complementar de Flow + Prompt (`manifest/post-install-package.xml`).
-3. Confirme Flow ativo e Prompt publicado/ativo.
+2. Deploy complementar de Flow + Prompts (`manifest/post-install-package.xml`).
+3. Confirme Flow ativo e Prompts publicados/ativos.
 4. So depois valide a execucao no LWC.
 
 Comando recomendado:
@@ -202,7 +208,7 @@ URL direta do instalador do pacote (LWC + Apex):
 - Producao/Developer Edition: `https://login.salesforce.com/packaging/installPackage.apexp?p0=04tHp000001Rd16IAC`
 - Sandbox: `https://test.salesforce.com/packaging/installPackage.apexp?p0=04tHp000001Rd16IAC`
 
-Observacao: essa URL instala o pacote base (componentes como LWC e Apex). Para instalar tambem os metadados complementares (Flows + Prompt), execute o script acima ou faça o deploy do `manifest/post-install-package.xml`.
+Observacao: essa URL instala o pacote base (componentes como LWC e Apex). Para instalar tambem os metadados complementares (Flows + Prompts), execute o script acima ou faça o deploy do `manifest/post-install-package.xml`.
 
 Esse script executa:
 
@@ -211,6 +217,7 @@ Esse script executa:
   - `Get_Voice_Call_Transcript` (Flow)
   - `Voice_Grounded_Replies_Bridge` (Flow)
   - `Grounded_Service_Reply_Voice_Monitor` (Prompt Template)
+  - `OnCall_Sentiment_Analysis` (Prompt Template)
 - validacao basica dos FlowDefinitions implantados.
 
 ## Troubleshooting rapido

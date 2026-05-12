@@ -1,7 +1,8 @@
 import { LightningElement, api, track } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
-import generateReplies from '@salesforce/apex/GroundedRepliesVoiceController.generateReplies';
 import fetchTranscript from '@salesforce/apex/GroundedRepliesVoiceController.fetchTranscript';
+import generateRepliesFromTranscript from '@salesforce/apex/GroundedRepliesVoiceController.generateRepliesFromTranscript';
+import analyzeSentimentFromTranscript from '@salesforce/apex/GroundedRepliesVoiceController.analyzeSentimentFromTranscript';
 
 const STATE_NOT_STARTED = 'not_started';
 const STATE_LISTENING = 'listening';
@@ -17,6 +18,7 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
     @api trackCustomerSpeech = false;
     @api transcriptFlowName = 'Get_Voice_Call_Transcript';
     @api groundingFlowName = 'Voice_Grounded_Replies_Bridge';
+    @api sentimentPromptName = 'OnCall_Sentiment_Analysis';
     @api transcriptPollIntervalMs = 4000;
     @api debugMode = false;
 
@@ -39,8 +41,11 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
 
     @track listeningState = STATE_NOT_STARTED;
     @track recommendations = [];
-    @track isLoading = false;
+    @track isLoadingReplies = false;
+    @track isLoadingSentiment = false;
     @track errorMessage;
+    @track sentimentErrorMessage;
+    @track sentiment = 'indefinido';
     @track lastTranscriptPreview;
     @track debugLogs = [];
 
@@ -84,6 +89,10 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
         return this.allowPause || this.listeningState === STATE_NOT_STARTED || this.isListening;
     }
 
+    get isLoading() {
+        return this.isLoadingReplies || this.isLoadingSentiment;
+    }
+
     get estadoLabel() {
         if (this.listeningState === STATE_NOT_STARTED) return 'Nao iniciado';
         if (this.listeningState === STATE_LISTENING) return 'Iniciado';
@@ -94,6 +103,27 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
         if (this.listeningState === STATE_NOT_STARTED) return 'semaforo vermelho';
         if (this.listeningState === STATE_LISTENING) return 'semaforo verde';
         return 'semaforo amarelo';
+    }
+
+    get sentimentoLabel() {
+        if (this.sentiment === 'positivo') return 'Positivo';
+        if (this.sentiment === 'negativo') return 'Negativo';
+        if (this.sentiment === 'neutro') return 'Neutro';
+        return 'Sem analise';
+    }
+
+    get sentimentoBadgeClasse() {
+        if (this.sentiment === 'positivo') return 'status-badge status-badge-verde';
+        if (this.sentiment === 'negativo') return 'status-badge status-badge-vermelho';
+        if (this.sentiment === 'neutro') return 'status-badge status-badge-amarelo';
+        return 'status-badge status-badge-amarelo';
+    }
+
+    get sentimentoTooltip() {
+        if (this.sentimentErrorMessage) {
+            return `Sentimento: falha na analise (${this.sentimentErrorMessage})`;
+        }
+        return `Sentimento do cliente: ${this.sentimentoLabel}`;
     }
 
     get progressoPercentual() {
@@ -124,6 +154,8 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
             this.transcriptBuffer = '';
             this.wordCount = 0;
             this.lastTranscriptSnapshot = '';
+            this.sentiment = 'indefinido';
+            this.sentimentErrorMessage = null;
             this.logDebug('Monitoramento parado manualmente.');
             return;
         }
@@ -180,6 +212,8 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
             actor === 'caller' ||
             actor === 'participant' ||
             actor === '';
+        // Default behavior: always monitor customer messages.
+        // Service rep messages are included only when configured.
         const shouldInclude = isCustomer || (this.trackCustomerSpeech && isAgent);
         if (!shouldInclude) return;
 
@@ -204,37 +238,28 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
         if (!force && !this.transcriptBuffer.trim()) return;
 
         this.processing = true;
-        this.isLoading = true;
         this.errorMessage = null;
+        this.sentimentErrorMessage = null;
 
         try {
             this.logDebug(`Disparando recomendacoes (forcado=${force ? 'sim' : 'nao'}).`);
-            const response = await generateReplies({
+            const transcript = await fetchTranscript({
                 voiceCallId: this.recordId,
-                transcriptFlowName: this.transcriptFlowName,
-                groundingFlowName: this.groundingFlowName
+                transcriptFlowName: this.transcriptFlowName
             });
 
-            if (!response?.success) {
-                this.errorMessage = response?.errorMessage || 'Nao foi possivel gerar recomendacoes.';
-                this.logDebug(`Falha ao gerar recomendacoes: ${this.errorMessage}`);
-            } else {
-                this.recommendations = (response.recommendations || []).map((item, index) => ({
-                    ...item,
-                    rowKey: `${item.sourceRecordId || 'no-source'}-${index}`,
-                    knowledgeTooltip: item.articleTitle
-                        ? `Artigo: ${item.articleTitle}`
-                        : item.sourceRecordId
-                            ? `Artigo: ${item.sourceRecordId}`
-                            : 'Sem artigo vinculado',
-                    isKnowledgeLinkable: item.sourceRecordId?.startsWith('ka0'),
-                    disableKnowledgeButton: !item.sourceRecordId?.startsWith('ka0')
-                }));
-                this.lastTranscriptPreview = (response.transcript || '').substring(0, 300);
-                this.transcriptBuffer = '';
-                this.wordCount = 0;
-                this.logDebug(`Recomendacoes geradas com sucesso: ${this.recommendations.length}.`);
+            if (!transcript || !transcript.trim()) {
+                throw new Error('Nao foi possivel obter o transcript para analise.');
             }
+
+            this.lastTranscriptPreview = transcript.substring(0, 300);
+            this.transcriptBuffer = '';
+            this.wordCount = 0;
+
+            const groundingPromise = this.generateRepliesInParallel(transcript);
+            const sentimentPromise = this.generateSentimentInParallel(transcript);
+
+            await Promise.allSettled([groundingPromise, sentimentPromise]);
         } catch (error) {
             this.errorMessage = error?.body?.message || error?.message || 'Erro inesperado.';
             this.logDebug(`Erro inesperado: ${this.errorMessage}`);
@@ -246,9 +271,76 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
                 })
             );
         } finally {
-            this.isLoading = false;
             this.processing = false;
         }
+    }
+
+    async generateRepliesInParallel(transcript) {
+        this.isLoadingReplies = true;
+        try {
+            const response = await generateRepliesFromTranscript({
+                voiceCallId: this.recordId,
+                transcript,
+                groundingFlowName: this.groundingFlowName
+            });
+            this.applyRecommendationResponse(response);
+        } catch (error) {
+            this.errorMessage = error?.body?.message || error?.message || 'Erro inesperado ao gerar recomendacoes.';
+            this.logDebug(`Erro no grounding: ${this.errorMessage}`);
+        } finally {
+            this.isLoadingReplies = false;
+        }
+    }
+
+    async generateSentimentInParallel(transcript) {
+        this.isLoadingSentiment = true;
+        try {
+            const response = await analyzeSentimentFromTranscript({
+                voiceCallId: this.recordId,
+                transcript,
+                sentimentPromptName: this.sentimentPromptName
+            });
+            this.applySentimentResponse(response);
+        } catch (error) {
+            this.sentimentErrorMessage =
+                error?.body?.message || error?.message || 'Erro inesperado ao analisar sentimento.';
+            this.logDebug(`Erro na analise de sentimento: ${this.sentimentErrorMessage}`);
+        } finally {
+            this.isLoadingSentiment = false;
+        }
+    }
+
+    applyRecommendationResponse(response) {
+        if (!response?.success) {
+            this.errorMessage = response?.errorMessage || 'Nao foi possivel gerar recomendacoes.';
+            this.logDebug(`Falha ao gerar recomendacoes: ${this.errorMessage}`);
+            return;
+        }
+
+        this.recommendations = (response.recommendations || []).map((item, index) => ({
+            ...item,
+            rowKey: `${item.sourceRecordId || 'no-source'}-${index}`,
+            knowledgeTooltip: item.articleTitle
+                ? `Artigo: ${item.articleTitle}`
+                : item.sourceRecordId
+                    ? `Artigo: ${item.sourceRecordId}`
+                    : 'Sem artigo vinculado',
+            isKnowledgeLinkable: item.sourceRecordId?.startsWith('ka0'),
+            disableKnowledgeButton: !item.sourceRecordId?.startsWith('ka0')
+        }));
+        this.logDebug(`Recomendacoes geradas com sucesso: ${this.recommendations.length}.`);
+    }
+
+    applySentimentResponse(response) {
+        if (!response?.success) {
+            this.sentimentErrorMessage = response?.errorMessage || 'Nao foi possivel identificar o sentimento.';
+            this.logDebug(`Falha na analise de sentimento: ${this.sentimentErrorMessage}`);
+            return;
+        }
+
+        this.sentimentErrorMessage = null;
+        this.sentiment = response.sentiment || 'indefinido';
+        this.logDebug(`Sentimento atualizado: ${this.sentiment}.`);
     }
 
     countWords(text) {
@@ -301,6 +393,7 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
 
     startPolling() {
         this.stopPolling();
+        // If real-time transcript events are flowing, polling acts as fallback only.
         const interval = Number(this.transcriptPollIntervalMs) || 4000;
         this.pollTimer = window.setInterval(() => {
             this.pollTranscriptFallback();
@@ -353,6 +446,8 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
                 await this.requestRecommendations();
             }
         } catch (error) {
+            // Silent fallback error to avoid noisy UX on transient flow issues.
+            // eslint-disable-next-line no-console
             console.warn('Erro no polling de transcricao:', error);
             this.logDebug('Erro no polling de transcricao.');
         } finally {
@@ -377,6 +472,7 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
             .map((line) => line.trim())
             .filter((line) => line.length > 0);
 
+        // If transcript has no clear line structure, fallback to normalized text.
         if (!lines.length) {
             return normalized;
         }
@@ -390,6 +486,8 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
             const isCustomerLine = actorType === 'customer';
             const isAgentLine = actorType === 'agent';
 
+            // Default: count customer messages only.
+            // Include service rep lines only when configured.
             if (isCustomerLine) {
                 selected.push(cleanLine);
                 return;
@@ -398,6 +496,9 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
                 if (this.trackCustomerSpeech) selected.push(cleanLine);
                 return;
             }
+            // Unknown line format:
+            // - include only when service rep messages are enabled (less restrictive mode)
+            // - otherwise ignore to avoid counting non-customer content.
             if (this.trackCustomerSpeech) {
                 selected.push(cleanLine);
             }
@@ -408,8 +509,10 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
 
     normalizePollingLine(line) {
         return (line || '')
+            // Remove wrappers like "conversationTranscript (" and trailing ")".
             .replace(/^conversationTranscript\s*\(/i, '')
             .replace(/\)\s*$/i, '')
+            // Remove timestamps in formats like "( 13s )", "(1m 23s)", "[00:13]".
             .replace(/^\(\s*\d+\s*[smh](?:\s+\d+\s*[smh])?\s*\)\s*/i, '')
             .replace(/^\[?\d{1,2}:\d{2}(?::\d{2})?\]?\s*/i, '')
             .replace(/^\[?\d{4}-\d{2}-\d{2}[^\]]*\]?\s*/i, '')
@@ -417,6 +520,10 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
     }
 
     detectPollingActor(cleanLine) {
+        // Expected examples:
+        // "Agent: ..."
+        // "EndUser: ..."
+        // "Customer: ..."
         const actorMatch = cleanLine.match(/^([a-zA-Z_][a-zA-Z0-9_\s-]{0,30})\s*[:\-]/);
         if (!actorMatch) return 'unknown';
         const actor = (actorMatch[1] || '').toLowerCase().replace(/\s+/g, '');

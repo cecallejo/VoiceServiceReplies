@@ -13,6 +13,10 @@
     background: var(--lwc-colorBackground, #fff);
 }
 
+.actions-bar {
+    align-items: center;
+}
+
 .estado-bloco,
 .contador-bloco {
     display: flex;
@@ -29,6 +33,33 @@
     font-weight: 700;
 }
 
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 1.4rem;
+    padding: 0.1rem 0.55rem;
+    border-radius: 0.4rem;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+}
+
+.status-badge-verde {
+    background: #2e844a;
+}
+
+.status-badge-amarelo {
+    background: #dd7a01;
+}
+
+.status-badge-vermelho {
+    background: #ba0517;
+}
+
 .contador-valor {
     font-size: 0.8rem;
     color: var(--lwc-colorTextDefault, #181818);
@@ -42,6 +73,12 @@
     display: inline-block;
 }
 
+.actions-bar .semaforo {
+    width: 0.55rem;
+    height: 0.55rem;
+    margin-right: 0.15rem;
+}
+
 .semaforo.verde {
     background: #2e844a;
 }
@@ -52,6 +89,10 @@
 
 .semaforo.vermelho {
     background: #ba0517;
+}
+
+.semaforo.neutro {
+    background: #8e8e8e;
 }
 
 .barra-progresso {

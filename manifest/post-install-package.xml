@@ -7,6 +7,7 @@
     </types>
     <types>
         <members>Grounded_Service_Reply_Voice_Monitor</members>
+        <members>OnCall_Sentiment_Analysis</members>
         <name>GenAiPromptTemplate</name>
     </types>
     <version>66.0</version>

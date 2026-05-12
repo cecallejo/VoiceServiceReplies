@@ -29,7 +29,7 @@ public class cec_voice_SentimentAnalysis {
 
         //execute
         ConnectApi.EinsteinPromptTemplateGenerationsRepresentation generationsOutput = 
-        ConnectApi.EinsteinLLM.generateMessagesForPromptTemplate('Post_Call_Voice_Sentiment_Analysis', promptGenerationsInput);
+        ConnectApi.EinsteinLLM.generateMessagesForPromptTemplate('OnCall_Sentiment_Analysis', promptGenerationsInput);
         ConnectApi.EinsteinLLMGenerationItemOutput response = generationsOutput.generations[0];
 
         System.debug(response.text);

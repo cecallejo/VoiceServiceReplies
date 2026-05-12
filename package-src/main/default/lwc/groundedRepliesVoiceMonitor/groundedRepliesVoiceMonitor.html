@@ -1,7 +1,8 @@
 <template>
     <lightning-card title={cardTitle} icon-name={cardIcon}>
-        <div slot="actions" class="slds-grid slds-gutters_x-small">
+        <div slot="actions" class="slds-grid slds-gutters_x-small actions-bar">
             <template if:true={showActionButton}>
+                <span class={estadoClasse} title={estadoLabel}></span>
                 <lightning-button
                     label={actionLabel}
                     variant="neutral"
@@ -30,9 +31,9 @@
 
         <div class="container slds-p-around_medium">
             <div class="status-panel slds-m-bottom_medium">
-                <div class="estado-bloco">
-                    <span class={estadoClasse}></span>
-                    <span class="estado-label">{estadoLabel}</span>
+                <div class="contador-bloco">
+                    <span class="contador-label">Sentimento</span>
+                    <span class={sentimentoBadgeClasse} title={sentimentoTooltip}>{sentimentoLabel}</span>
                 </div>
                 <div class="contador-bloco">
                     <span class="contador-label">Palavras</span>

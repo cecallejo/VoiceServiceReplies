@@ -73,7 +73,7 @@ Opcao via URL do instalador (pacote base com LWC + Apex):
 - Producao/Developer Edition: `https://login.salesforce.com/packaging/installPackage.apexp?p0=04tHp000001Rd16IAC`
 - Sandbox: `https://test.salesforce.com/packaging/installPackage.apexp?p0=04tHp000001Rd16IAC`
 
-> Importante: a URL instala apenas o pacote base. Para completar a instalacao (Flows + Prompt), rode o deploy complementar via `manifest/post-install-package.xml` ou use `./scripts/install_full_asset.sh <alias-org-destino>`.
+> Importante: a URL instala apenas o pacote base. Para completar a instalacao (Flows + Prompts), rode o deploy complementar via `manifest/post-install-package.xml` ou use `./scripts/install_full_asset.sh <alias-org-destino>`.
 
 ## 6) Pos-instalacao
 
@@ -82,11 +82,13 @@ Na org destino:
 - Verifique se os flows estao ativos:
   - `Get_Voice_Call_Transcript`
   - `Voice_Grounded_Replies_Bridge`
-- Verifique se o Prompt Template `Grounded_Service_Reply_Voice_Monitor` esta publicado e ativo.
+- Verifique se os Prompt Templates estao publicados e ativos:
+  - `Grounded_Service_Reply_Voice_Monitor`
+  - `OnCall_Sentiment_Analysis`
 - Adicione `Grounded Replies Voice Monitor` na Lightning Record Page de `VoiceCall`.
 - Ajuste propriedades do componente conforme necessidade.
 
-### Guia detalhado: configurar Flow + Prompt na org destino
+### Guia detalhado: configurar Flow + Prompts na org destino
 
 Use este guia quando houver ajustes de comportamento entre versoes, ou quando o template/flow precisar ser recriado manualmente.
 
@@ -119,7 +121,8 @@ Use este guia quando houver ajustes de comportamento entre versoes, ou quando o 
 #### C. Checklist de compatibilidade (antes de liberar)
 
 - [ ] O Flow chama exatamente o Prompt esperado.
-- [ ] O Prompt recebe `Input:Transcript` e retorna texto JSON.
+- [ ] O Prompt `Grounded_Service_Reply_Voice_Monitor` recebe `Input:Transcript` e retorna texto JSON.
+- [ ] O Prompt `OnCall_Sentiment_Analysis` recebe `Input:Transcript` e retorna JSON com `sentiment`.
 - [ ] O JSON contem `responses[]`, cada item com `response` e `source`.
 - [ ] O Flow esta `Active`.
 - [ ] O Prompt esta `Published` e com versao ativa.
@@ -133,7 +136,7 @@ sf data query \
   --target-org <alias> \
   --query "SELECT DeveloperName, Status FROM FlowDefinition WHERE DeveloperName IN ('Get_Voice_Call_Transcript','Voice_Grounded_Replies_Bridge')"
 
-# Reaplicar apenas metadados complementares (Flow + Prompt)
+# Reaplicar apenas metadados complementares (Flow + Prompts)
 sf project deploy start \
   --target-org <alias> \
   --manifest manifest/post-install-package.xml \

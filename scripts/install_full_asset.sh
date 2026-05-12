@@ -24,7 +24,7 @@ sf package install \
   --publish-wait 10 \
   --no-prompt
 
-echo "==> Fazendo deploy dos metadados complementares (Flows + Prompt)"
+echo "==> Fazendo deploy dos metadados complementares (Flows + Prompts)"
 sf project deploy start \
   --target-org "${TARGET_ORG}" \
   --manifest "${POST_INSTALL_MANIFEST}" \
@@ -37,5 +37,5 @@ sf data query \
 
 echo "==> Processo concluido."
 echo "Checklist manual:"
-echo "  1) Confirmar Prompt Template Grounded_Service_Reply_Voice_Monitor com versao ativa/publicada."
+echo "  1) Confirmar Prompt Templates Grounded_Service_Reply_Voice_Monitor e OnCall_Sentiment_Analysis com versao ativa/publicada."
 echo "  2) Adicionar o componente Grounded Replies Voice Monitor na Lightning Record Page de VoiceCall."

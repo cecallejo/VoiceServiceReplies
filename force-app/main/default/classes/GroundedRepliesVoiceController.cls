@@ -14,6 +14,13 @@ public with sharing class GroundedRepliesVoiceController {
         @AuraEnabled public String errorMessage;
     }
 
+    public class SentimentResponse {
+        @AuraEnabled public Boolean success;
+        @AuraEnabled public String sentiment;
+        @AuraEnabled public String rawPromptResponse;
+        @AuraEnabled public String errorMessage;
+    }
+
     @AuraEnabled
     public static RecommendationResponse generateReplies(
         Id voiceCallId,
@@ -41,10 +48,82 @@ public with sharing class GroundedRepliesVoiceController {
                 throw new AuraHandledException('Transcript flow returned an empty transcript.');
             }
 
+            RecommendationResponse byTranscript = generateRepliesFromTranscript(
+                voiceCallId,
+                transcript,
+                groundingFlowName
+            );
+            result.rawPromptResponse = byTranscript.rawPromptResponse;
+            result.recommendations = byTranscript.recommendations;
+            result.success = byTranscript.success;
+            result.errorMessage = byTranscript.errorMessage;
+        } catch (Exception e) {
+            result.errorMessage = e.getMessage();
+        }
+
+        return result;
+    }
+
+    @AuraEnabled
+    public static RecommendationResponse generateRepliesFromTranscript(
+        Id voiceCallId,
+        String transcript,
+        String groundingFlowName
+    ) {
+        RecommendationResponse result = new RecommendationResponse();
+        result.success = false;
+        result.recommendations = new List<RecommendationItem>();
+        result.transcript = transcript;
+
+        try {
+            if (voiceCallId == null) {
+                throw new AuraHandledException('VoiceCall Id is required.');
+            }
+            if (String.isBlank(transcript)) {
+                throw new AuraHandledException('Transcript is required.');
+            }
+            if (String.isBlank(groundingFlowName)) {
+                throw new AuraHandledException('Grounding Flow Name is required.');
+            }
+
             String promptResponse = runGroundingFlow(voiceCallId, transcript, groundingFlowName);
             result.rawPromptResponse = promptResponse;
             result.recommendations = parseRecommendations(promptResponse);
             result.success = true;
+        } catch (Exception e) {
+            result.errorMessage = e.getMessage();
+        }
+
+        return result;
+    }
+
+    @AuraEnabled
+    public static SentimentResponse analyzeSentimentFromTranscript(
+        Id voiceCallId,
+        String transcript,
+        String sentimentPromptName
+    ) {
+        SentimentResponse result = new SentimentResponse();
+        result.success = false;
+
+        try {
+            if (voiceCallId == null) {
+                throw new AuraHandledException('VoiceCall Id is required.');
+            }
+            if (String.isBlank(transcript)) {
+                throw new AuraHandledException('Transcript is required.');
+            }
+            if (String.isBlank(sentimentPromptName)) {
+                throw new AuraHandledException('Sentiment Prompt Name is required.');
+            }
+
+            String promptResponse = runSentimentPrompt(voiceCallId, transcript, sentimentPromptName);
+            result.rawPromptResponse = promptResponse;
+            result.sentiment = parseSentiment(promptResponse);
+            result.success = String.isNotBlank(result.sentiment);
+            if (!result.success) {
+                result.errorMessage = 'Could not identify sentiment from prompt response.';
+            }
         } catch (Exception e) {
             result.errorMessage = e.getMessage();
         }
@@ -109,6 +188,45 @@ public with sharing class GroundedRepliesVoiceController {
             }
         }
         return null;
+    }
+
+    private static String runSentimentPrompt(Id voiceCallId, String transcript, String promptName) {
+        ConnectApi.EinsteinPromptTemplateGenerationsInput promptInput =
+            new ConnectApi.EinsteinPromptTemplateGenerationsInput();
+        promptInput.isPreview = false;
+        promptInput.additionalConfig = new ConnectApi.EinsteinLlmAdditionalConfigInput();
+        promptInput.additionalConfig.numGenerations = 1;
+        promptInput.additionalConfig.applicationName = 'PromptTemplateGenerationsInvocable';
+        promptInput.additionalConfig.temperature = 0.0;
+
+        Map<String, String> jsonType = new Map<String, String>{ 'type' => 'json_object' };
+        ConnectApi.WrappedValue responseFormat = new ConnectApi.WrappedValue();
+        responseFormat.value = jsonType;
+        promptInput.additionalConfig.additionalParameters = new Map<String, ConnectApi.WrappedValue>{
+            'response_format' => responseFormat
+        };
+
+        Map<String, ConnectApi.WrappedValue> inputParams = new Map<String, ConnectApi.WrappedValue>();
+        Map<String, String> voiceCallMap = new Map<String, String>{ 'id' => (String) voiceCallId };
+        ConnectApi.WrappedValue voiceCallValue = new ConnectApi.WrappedValue();
+        voiceCallValue.value = voiceCallMap;
+        inputParams.put('Input:VoiceCall', voiceCallValue);
+
+        ConnectApi.WrappedValue transcriptValue = new ConnectApi.WrappedValue();
+        transcriptValue.value = transcript;
+        inputParams.put('Input:Transcript', transcriptValue);
+        inputParams.put('transcript', transcriptValue);
+        inputParams.put('Transcript', transcriptValue);
+
+        promptInput.inputParams = inputParams;
+
+        ConnectApi.EinsteinPromptTemplateGenerationsRepresentation output =
+            ConnectApi.EinsteinLLM.generateMessagesForPromptTemplate(promptName, promptInput);
+        if (output == null || output.generations == null || output.generations.isEmpty()) {
+            return null;
+        }
+
+        return output.generations[0].text;
     }
 
     @TestVisible
@@ -226,5 +344,64 @@ public with sharing class GroundedRepliesVoiceController {
         }
         String value = String.valueOf(source.get(key));
         return String.isNotBlank(value) ? value : null;
+    }
+
+    private static String parseSentiment(String rawResponse) {
+        if (String.isBlank(rawResponse)) {
+            return null;
+        }
+
+        String normalized = normalizeSentiment(rawResponse);
+        if (normalized != null) {
+            return normalized;
+        }
+
+        try {
+            Object parsed = JSON.deserializeUntyped(rawResponse);
+            if (parsed instanceof Map<String, Object>) {
+                Map<String, Object> root = (Map<String, Object>) parsed;
+                List<String> candidateKeys = new List<String>{
+                    'sentiment',
+                    'Sentiment',
+                    'sentimento',
+                    'Sentimento',
+                    'classification',
+                    'Classificacao',
+                    'classificacao',
+                    'label',
+                    'Label'
+                };
+                for (String key : candidateKeys) {
+                    if (!root.containsKey(key) || root.get(key) == null) {
+                        continue;
+                    }
+                    String parsedValue = normalizeSentiment(String.valueOf(root.get(key)));
+                    if (parsedValue != null) {
+                        return parsedValue;
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+            // Ignore parsing errors and return null.
+        }
+
+        return null;
+    }
+
+    private static String normalizeSentiment(String value) {
+        if (String.isBlank(value)) {
+            return null;
+        }
+        String lowered = value.toLowerCase();
+        if (lowered.contains('positiv')) {
+            return 'positivo';
+        }
+        if (lowered.contains('negativ')) {
+            return 'negativo';
+        }
+        if (lowered.contains('neutr')) {
+            return 'neutro';
+        }
+        return null;
     }
 }
