@@ -9,6 +9,7 @@ public with sharing class GroundedRepliesVoiceController {
     public class RecommendationResponse {
         @AuraEnabled public Boolean success;
         @AuraEnabled public String transcript;
+        @AuraEnabled public String searchQuery;
         @AuraEnabled public String rawPromptResponse;
         @AuraEnabled public List<RecommendationItem> recommendations;
         @AuraEnabled public String errorMessage;
@@ -51,10 +52,12 @@ public with sharing class GroundedRepliesVoiceController {
             RecommendationResponse byTranscript = generateRepliesFromTranscript(
                 voiceCallId,
                 transcript,
-                groundingFlowName
+                groundingFlowName,
+                false
             );
             result.rawPromptResponse = byTranscript.rawPromptResponse;
             result.recommendations = byTranscript.recommendations;
+            result.searchQuery = byTranscript.searchQuery;
             result.success = byTranscript.success;
             result.errorMessage = byTranscript.errorMessage;
         } catch (Exception e) {
@@ -68,7 +71,8 @@ public with sharing class GroundedRepliesVoiceController {
     public static RecommendationResponse generateRepliesFromTranscript(
         Id voiceCallId,
         String transcript,
-        String groundingFlowName
+        String groundingFlowName,
+        Boolean enableApexLogs
     ) {
         RecommendationResponse result = new RecommendationResponse();
         result.success = false;
@@ -86,15 +90,35 @@ public with sharing class GroundedRepliesVoiceController {
                 throw new AuraHandledException('Grounding Flow Name is required.');
             }
 
-            String promptResponse = runGroundingFlow(voiceCallId, transcript, groundingFlowName);
+            String searchQuery = buildSearchQuery(transcript);
+            result.searchQuery = searchQuery;
+            String promptResponse = runGroundingFlow(voiceCallId, transcript, searchQuery, groundingFlowName);
             result.rawPromptResponse = promptResponse;
             result.recommendations = parseRecommendations(promptResponse);
+            logGroundingPayload(enableApexLogs, transcript, searchQuery, result.recommendations);
             result.success = true;
         } catch (Exception e) {
             result.errorMessage = e.getMessage();
         }
 
         return result;
+    }
+
+    private static void logGroundingPayload(
+        Boolean enableApexLogs,
+        String transcript,
+        String searchQuery,
+        List<RecommendationItem> recommendations
+    ) {
+        if (enableApexLogs != true) {
+            return;
+        }
+        System.debug(LoggingLevel.INFO, 'Grounding transcript completo: ' + transcript);
+        System.debug(LoggingLevel.INFO, 'Grounding SearchQuery: ' + searchQuery);
+        System.debug(
+            LoggingLevel.INFO,
+            'Grounding recomendacoes: ' + JSON.serialize(recommendations == null ? new List<RecommendationItem>() : recommendations)
+        );
     }
 
     @AuraEnabled
@@ -165,12 +189,19 @@ public with sharing class GroundedRepliesVoiceController {
         return null;
     }
 
-    private static String runGroundingFlow(Id voiceCallId, String transcript, String flowName) {
+    private static String runGroundingFlow(
+        Id voiceCallId,
+        String transcript,
+        String searchQuery,
+        String flowName
+    ) {
         Map<String, Object> inputs = new Map<String, Object>{
             'recordId' => (String) voiceCallId,
             'voiceCallId' => (String) voiceCallId,
             'transcript' => transcript,
-            'Transcript' => transcript
+            'Transcript' => transcript,
+            'searchQuery' => searchQuery,
+            'SearchQuery' => searchQuery
         };
         Flow.Interview interview = Flow.Interview.createInterview(flowName, inputs);
         interview.start();
@@ -188,6 +219,124 @@ public with sharing class GroundedRepliesVoiceController {
             }
         }
         return null;
+    }
+
+    private static String buildSearchQuery(String transcript) {
+        String normalizedTranscript = normalizeTranscriptText(transcript);
+        if (String.isBlank(normalizedTranscript)) {
+            return '';
+        }
+
+        List<String> rawLines = normalizedTranscript.split('\\r?\\n');
+        List<String> lines = new List<String>();
+        Boolean hasTypedLines = false;
+        Integer lastAgentLineIndex = -1;
+
+        for (String rawLine : rawLines) {
+            String cleanedLine = normalizeTranscriptLine(rawLine);
+            if (String.isBlank(cleanedLine)) {
+                continue;
+            }
+            lines.add(cleanedLine);
+            String actorType = detectActorType(cleanedLine);
+            if (actorType != 'unknown') {
+                hasTypedLines = true;
+            }
+            if (actorType == 'agent') {
+                lastAgentLineIndex = lines.size() - 1;
+            }
+        }
+
+        if (lines.isEmpty()) {
+            return '';
+        }
+        if (!hasTypedLines) {
+            return collapseWhitespace(normalizedTranscript);
+        }
+
+        List<String> endUserMessages = new List<String>();
+        for (Integer i = lastAgentLineIndex + 1; i < lines.size(); i++) {
+            if (detectActorType(lines[i]) != 'customer') {
+                continue;
+            }
+            String message = extractMessageText(lines[i]);
+            if (String.isNotBlank(message)) {
+                endUserMessages.add(message);
+            }
+        }
+
+        return collapseWhitespace(String.join(endUserMessages, ' '));
+    }
+
+    private static String normalizeTranscriptText(String transcript) {
+        return (transcript == null)
+            ? ''
+            : transcript
+                .replaceAll('(?i)<br\\s*/?>', '\n')
+                .replaceAll('\\r\\n', '\n')
+                .replaceAll('\\r', '\n')
+                .trim();
+    }
+
+    private static String normalizeTranscriptLine(String line) {
+        if (String.isBlank(line)) {
+            return '';
+        }
+        return line
+            .replaceAll('(?i)^conversationTranscript\\s*\\(', '')
+            .replaceAll('(?i)\\)\\s*$', '')
+            .replaceAll('(?i)^\\(\\s*\\d+\\s*[smh](?:\\s+\\d+\\s*[smh])?\\s*\\)\\s*', '')
+            .replaceAll('^\\[?\\d{1,2}:\\d{2}(?::\\d{2})?\\]?\\s*', '')
+            .replaceAll('^\\[?\\d{4}-\\d{2}-\\d{2}[^\\]]*\\]?\\s*', '')
+            .trim();
+    }
+
+    private static String detectActorType(String line) {
+        if (String.isBlank(line)) {
+            return 'unknown';
+        }
+        Matcher actorMatcher = Pattern.compile('^([a-zA-Z_][a-zA-Z0-9_\\s-]{0,30})\\s*[:\\-]')
+            .matcher(line);
+        if (!actorMatcher.find()) {
+            return 'unknown';
+        }
+        String actor = actorMatcher.group(1).toLowerCase().replaceAll('\\s+', '');
+
+        if (
+            actor == 'enduser' ||
+            actor == 'end_user' ||
+            actor == 'customer' ||
+            actor == 'cliente' ||
+            actor == 'caller' ||
+            actor == 'participant' ||
+            actor == 'usuario' ||
+            actor == 'consumidor'
+        ) {
+            return 'customer';
+        }
+        if (
+            actor == 'agent' ||
+            actor == 'agente' ||
+            actor == 'servicerep' ||
+            actor == 'service_rep' ||
+            actor == 'atendente' ||
+            actor == 'representante' ||
+            actor == 'advisor'
+        ) {
+            return 'agent';
+        }
+        return 'unknown';
+    }
+
+    private static String extractMessageText(String line) {
+        if (String.isBlank(line)) {
+            return '';
+        }
+        return line.replaceFirst('^[a-zA-Z_][a-zA-Z0-9_\\s-]{0,30}\\s*[:\\-]\\s*', '').trim();
+    }
+
+    private static String collapseWhitespace(String value) {
+        return String.isBlank(value) ? '' : value.replaceAll('\\s+', ' ').trim();
     }
 
     private static String runSentimentPrompt(Id voiceCallId, String transcript, String promptName) {

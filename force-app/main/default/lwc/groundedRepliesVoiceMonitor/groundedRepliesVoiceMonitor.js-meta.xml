@@ -21,6 +21,7 @@
             <property name="batchWordThreshold" type="Integer" label="Word Batch Threshold" default="50" />
             <property name="transcriptPollIntervalMs" type="Integer" label="Transcript Poll Interval (ms)" default="4000" />
             <property name="debugMode" type="Boolean" label="Modo de depuracao" default="false" />
+            <property name="apexLogMode" type="Boolean" label="Apex Log Mode" default="false" />
             <property name="transcriptFlowName" type="String" label="Transcript Flow Name" default="Get_Voice_Call_Transcript" />
             <property name="groundingFlowName" type="String" label="Grounding Flow Name" default="Voice_Grounded_Replies_Bridge" />
             <property name="sentimentPromptName" type="String" label="Sentiment Prompt Name" default="OnCall_Sentiment_Analysis" />

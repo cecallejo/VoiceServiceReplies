@@ -21,6 +21,7 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
     @api sentimentPromptName = 'OnCall_Sentiment_Analysis';
     @api transcriptPollIntervalMs = 4000;
     @api debugMode = false;
+    @api apexLogMode = false;
 
     _allowPause;
     _requireStartButton;
@@ -286,7 +287,8 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
             const response = await generateRepliesFromTranscript({
                 voiceCallId: this.recordId,
                 transcript,
-                groundingFlowName: this.groundingFlowName
+                groundingFlowName: this.groundingFlowName,
+                enableApexLogs: this.apexLogMode
             });
             this.applyRecommendationResponse(response);
         } catch (error) {
@@ -316,6 +318,11 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
     }
 
     applyRecommendationResponse(response) {
+        const transcriptLog = response?.transcript || '';
+        const searchQueryLog = response?.searchQuery || '';
+        this.logDebug(`Transcricao completa enviada ao flow de grounding: ${transcriptLog}`);
+        this.logDebug(`SearchQuery enviada ao flow de grounding: ${searchQueryLog}`);
+
         if (!response?.success) {
             this.errorMessage = response?.errorMessage || 'Nao foi possivel gerar recomendacoes.';
             this.logDebug(`Falha ao gerar recomendacoes: ${this.errorMessage}`);

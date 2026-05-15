@@ -9,6 +9,8 @@ Componente reutilizavel para recomendacoes de resposta em tempo real em `VoiceCa
 - Contador de palavras por delta de transcricao.
 - Fallback por polling de transcricao quando eventos em tempo real nao chegam.
 - Integracao com Prompt Template via Flows.
+- Search query contextual para grounding (falas do EndUser apos a ultima resposta do agente).
+- Logging separado entre debug visual no card e `System.debug` no Apex.
 
 ## Arquitetura
 
@@ -35,8 +37,10 @@ Componente reutilizavel para recomendacoes de resposta em tempo real em `VoiceCa
 4. Ao atingir `batchWordThreshold`, o LWC chama Apex.
 5. Apex executa:
    - `Get_Voice_Call_Transcript` para transcricao atual.
+   - calculo de `SearchQuery` com base no trecho relevante do EndUser.
    - `Voice_Grounded_Replies_Bridge` para gerar resposta grounded.
 6. O LWC renderiza recomendacoes e links de Knowledge.
+7. Em paralelo, o Apex executa o prompt de sentimento (`OnCall_Sentiment_Analysis`).
 
 ## Configuracao no App Builder (VoiceCall)
 
@@ -51,6 +55,7 @@ Propriedades principais:
 - `Word Batch Threshold`: gatilho de palavras para gerar recomendacoes.
 - `Transcript Poll Interval (ms)`: intervalo de polling da transcricao.
 - `Modo de depuracao`: mostra painel de logs no card.
+- `Apex Log Mode`: habilita logs de servidor via `System.debug` (independente do debug visual).
 - `Transcript Flow Name`: default `Get_Voice_Call_Transcript`.
 - `Grounding Flow Name`: default `Voice_Grounded_Replies_Bridge`.
 - `Sentiment Prompt Name`: default `OnCall_Sentiment_Analysis`.
@@ -106,6 +111,7 @@ O componente e o Apex assumem o seguinte contrato:
 - Prompt Template: `Grounded_Service_Reply_Voice_Monitor`
 - Prompt Template de sentimento: `OnCall_Sentiment_Analysis`
 - Input do prompt no Flow: `Input:Transcript`
+- Novo input do Flow de grounding: `SearchQuery` (alem de `transcript` completo).
 - Output do Flow para Apex/LWC: variavel `promptResponse` (String, output=true)
 
 Se qualquer um desses nomes mudar, ajuste tambem:
@@ -120,20 +126,25 @@ No Flow Builder (Autolaunched Flow):
 1. Crie/edite a variavel de entrada `transcript`:
    - Tipo: Text
    - Available for input: true
-2. Crie/edite a variavel de saida `promptResponse`:
+2. Crie/edite a variavel de entrada `SearchQuery`:
+   - Tipo: Text
+   - Available for input: true
+3. Crie/edite a variavel de saida `promptResponse`:
    - Tipo: Text
    - Available for output: true
-3. Adicione uma acao de Prompt Template com:
+4. Adicione uma acao de Prompt Template com:
    - Prompt: `Grounded_Service_Reply_Voice_Monitor`
    - Parametro de entrada: `Input:Transcript` = `{!transcript}`
+   - Parametro de entrada para busca: mapeie para `{!SearchQuery}` conforme ajuste do prompt/flow.
    - Parametro de saida: `promptResponse` -> `{!promptResponse}`
-4. Garanta que o Start aponta para essa acao.
-5. Salve e ative (status Active).
+5. Garanta que o Start aponta para essa acao.
+6. Salve e ative (status Active).
 
 Checklist de validacao do Flow:
 
 - O nome API do Flow e `Voice_Grounded_Replies_Bridge`.
 - O elemento de acao referencia o prompt correto.
+- A variavel `SearchQuery` existe e esta conectada ao mapeamento do prompt.
 - A variavel `promptResponse` esta marcada como output.
 - O Flow esta ativo na org destino.
 
@@ -155,8 +166,18 @@ Checklist de validacao dos Prompts:
 - Existe versao `Published`.
 - O template tem `activeVersionIdentifier` valido.
 - O input `Input:Transcript` existe e e obrigatorio.
+- O prompt/flow de grounding ja considera `SearchQuery` como trecho de busca.
 - O JSON de resposta segue o contrato em "Contrato do Prompt (JSON esperado)".
 - No prompt `OnCall_Sentiment_Analysis`, o retorno contem `{"sentiment":"positivo|neutro|negativo"}`.
+
+### 3.1) Regra de composicao do `SearchQuery`
+
+O Apex envia ao Flow de grounding:
+
+- `transcript`: transcricao completa da chamada (mantida para contexto total).
+- `SearchQuery`: somente falas do `EndUser` apos a ultima fala detectada do agente humano.
+
+Se a transcricao nao vier com marcacao de ator reconhecivel, o fallback e usar o texto normalizado disponivel.
 
 ### 4) Ordem correta de implantacao (essencial)
 
@@ -231,3 +252,35 @@ Esse script executa:
 - Sem recomendacoes:
   - Verifique se ambos os flows estao ativos.
   - Valide se o prompt esta publicado e com versao ativa.
+
+## Observabilidade e logs (UI + Apex)
+
+### Debug visual no componente (LWC)
+
+- Controle: `Modo de depuracao`.
+- Mostra no card:
+  - eventos de transcricao/polling;
+  - transcricao completa enviada ao grounding;
+  - `SearchQuery` enviada ao grounding.
+
+### Log de servidor no Apex (`System.debug`)
+
+- Controle: `Apex Log Mode` (separado do `Modo de depuracao`).
+- Quando habilitado, registra a cada nova busca de recomendacao:
+  - `Grounding transcript completo: ...`
+  - `Grounding SearchQuery: ...`
+  - `Grounding recomendacoes: ...` (JSON serializado)
+
+### Como visualizar o log Apex (Setup)
+
+1. Setup -> Debug Logs -> adicione seu usuario em `Monitored Users`.
+2. Deixe `Apex Log Mode = true` no componente.
+3. Gere nova recomendacao no card.
+4. Abra o log recente e busque pelas 3 chaves acima.
+
+### Como visualizar via CLI
+
+```bash
+sf apex log list --target-org <alias>
+sf apex log get --log-id <LOG_ID> --target-org <alias>
+```
