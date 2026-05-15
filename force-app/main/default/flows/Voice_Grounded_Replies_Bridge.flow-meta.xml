@@ -3,15 +3,24 @@
     <actionCalls>
         <name>Get_Grounded_Recommendation</name>
         <label>Get Grounded Recommendation</label>
-        <locationX>176</locationX>
-        <locationY>287</locationY>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
         <actionName>Grounded_Service_Reply_Voice_Monitor</actionName>
         <actionType>generatePromptResponse</actionType>
+        <connector>
+            <targetReference>Log_ativo</targetReference>
+        </connector>
         <flowTransactionModel>CurrentTransaction</flowTransactionModel>
         <inputParameters>
             <name>Input:Transcript</name>
             <value>
                 <elementReference>transcript</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>Input:searchQuery</name>
+            <value>
+                <elementReference>SearchQuery</elementReference>
             </value>
         </inputParameters>
         <nameSegment>Grounded_Service_Reply_Voice_Monitor</nameSegment>
@@ -23,7 +32,79 @@
     </actionCalls>
     <apiVersion>66.0</apiVersion>
     <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <name>Define_Log</name>
+        <label>Define Log</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>LogEnabled</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Get_Grounded_Recommendation</targetReference>
+        </connector>
+    </assignments>
+    <decisions>
+        <name>Log_ativo</name>
+        <label>Log ativo</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Resultado padrão</defaultConnectorLabel>
+        <rules>
+            <name>Sim</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>LogEnabled</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Registra_log</targetReference>
+            </connector>
+            <label>Sim</label>
+        </rules>
+    </decisions>
     <environments>Default</environments>
+    <formulas>
+        <name>Response1</name>
+        <dataType>String</dataType>
+        <expression>IF(
+  CONTAINS({!promptResponse}, &apos;&quot;response1&quot;:&apos;),
+  MID(
+    {!promptResponse},
+    FIND(&apos;&quot;response1&quot;: &quot;&apos;, {!promptResponse}) + LEN(&apos;&quot;response1&quot;: &quot;&apos;),
+    FIND(
+      &apos;&quot;,&apos;,
+      {!promptResponse},
+      FIND(&apos;&quot;response1&quot;: &quot;&apos;, {!promptResponse}) + LEN(&apos;&quot;response1&quot;: &quot;&apos;)
+    ) - (FIND(&apos;&quot;response1&quot;: &quot;&apos;, {!promptResponse}) + LEN(&apos;&quot;response1&quot;: &quot;&apos;))
+  ),
+  &apos;&apos;
+)</expression>
+    </formulas>
+    <formulas>
+        <name>Response2</name>
+        <dataType>String</dataType>
+        <expression>IF(
+  CONTAINS({!promptResponse}, &apos;&quot;response2&quot;:&apos;),
+  MID(
+    {!promptResponse},
+    FIND(&apos;&quot;response2&quot;: &quot;&apos;, {!promptResponse}) + LEN(&apos;&quot;response2&quot;: &quot;&apos;),
+    FIND(
+      &apos;&quot;,&apos;,
+      {!promptResponse},
+      FIND(&apos;&quot;response2&quot;: &quot;&apos;, {!promptResponse}) + LEN(&apos;&quot;response2&quot;: &quot;&apos;)
+    ) - (FIND(&apos;&quot;response2&quot;: &quot;&apos;, {!promptResponse}) + LEN(&apos;&quot;response2&quot;: &quot;&apos;))
+  ),
+  &apos;&apos;
+)</expression>
+    </formulas>
     <interviewLabel>Voice Grounded Replies Bridge {!$Flow.CurrentDateTime}</interviewLabel>
     <label>Voice Grounded Replies Bridge</label>
     <processMetadataValues>
@@ -39,14 +120,60 @@
         </value>
     </processMetadataValues>
     <processType>AutoLaunchedFlow</processType>
+    <recordCreates>
+        <name>Registra_log</name>
+        <label>Registra log</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <inputAssignments>
+            <field>Answer_1__c</field>
+            <value>
+                <elementReference>Response1</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Answer_2__c</field>
+            <value>
+                <elementReference>Response2</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Search_Query__c</field>
+            <value>
+                <elementReference>SearchQuery</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Voice_Call__c</field>
+            <value>
+                <elementReference>recordId</elementReference>
+            </value>
+        </inputAssignments>
+        <object>Voice_Service_Reply__c</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordCreates>
     <start>
-        <locationX>50</locationX>
+        <locationX>0</locationX>
         <locationY>0</locationY>
         <connector>
-            <targetReference>Get_Grounded_Recommendation</targetReference>
+            <targetReference>Define_Log</targetReference>
         </connector>
     </start>
     <status>Active</status>
+    <variables>
+        <name>LogEnabled</name>
+        <dataType>Boolean</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>promptResponse</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>true</isOutput>
+    </variables>
     <variables>
         <name>recordId</name>
         <dataType>String</dataType>
@@ -55,7 +182,7 @@
         <isOutput>false</isOutput>
     </variables>
     <variables>
-        <name>voiceCallId</name>
+        <name>SearchQuery</name>
         <dataType>String</dataType>
         <isCollection>false</isCollection>
         <isInput>true</isInput>
@@ -69,10 +196,10 @@
         <isOutput>false</isOutput>
     </variables>
     <variables>
-        <name>promptResponse</name>
+        <name>voiceCallId</name>
         <dataType>String</dataType>
         <isCollection>false</isCollection>
-        <isInput>false</isInput>
-        <isOutput>true</isOutput>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
     </variables>
 </Flow>

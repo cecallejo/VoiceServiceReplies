@@ -13,7 +13,7 @@ Provide exactly two distinct answers.
 ###
 GROUNDING DATA:
 These are the grounding data relevant to the current conversation:
-{!$EinsteinSearch:Default_KA_KB_Data_Library_Retriever_1Cx_dPH7744f2df.results}
+{!$EinsteinSearch:BuscadorKnowledge_Article_Version_padr_o_1Cx_Zobd6043063.results}
 
 ###
 CONVERSATION TRANSCRIPT:
@@ -50,7 +50,7 @@ You should provide an answer following the standard below:
         <primaryModel>sfdc_ai__DefaultGPT5Mini</primaryModel>
         <status>Published</status>
         <templateDataProviders>
-            <definition>invocable://getEinsteinRetrieverResults/Default_KA_KB_Data_Library_Retriever_1Cx_dPH7744f2df</definition>
+            <definition>invocable://getEinsteinRetrieverResults/BuscadorKnowledge_Article_Version_padr_o_1Cx_Zobd6043063</definition>
             <description>Default retriever of semantic search KA_KB_Data_Library</description>
             <label>Default KA_KB_Data_Library Retriever</label>
             <parameters>
@@ -59,7 +59,7 @@ You should provide an answer following the standard below:
                 <parameterName>searchText</parameterName>
                 <valueExpression>{!$Input:Transcript}</valueExpression>
             </parameters>
-            <referenceName>EinsteinSearch:Default_KA_KB_Data_Library_Retriever_1Cx_dPH7744f2df</referenceName>
+            <referenceName>EinsteinSearch:BuscadorKnowledge_Article_Version_padr_o_1Cx_Zobd6043063</referenceName>
         </templateDataProviders>
         <versionIdentifier>xlJgOmBaVNAzJ8BzYYwCC2Rb0FSHB/Xx7tqrE4SmMAA=_1</versionIdentifier>
     </templateVersions>

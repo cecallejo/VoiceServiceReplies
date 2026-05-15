@@ -230,7 +230,6 @@ public with sharing class GroundedRepliesVoiceController {
         List<String> rawLines = normalizedTranscript.split('\\r?\\n');
         List<String> lines = new List<String>();
         Boolean hasTypedLines = false;
-        Integer lastAgentLineIndex = -1;
 
         for (String rawLine : rawLines) {
             String cleanedLine = normalizeTranscriptLine(rawLine);
@@ -242,9 +241,6 @@ public with sharing class GroundedRepliesVoiceController {
             if (actorType != 'unknown') {
                 hasTypedLines = true;
             }
-            if (actorType == 'agent') {
-                lastAgentLineIndex = lines.size() - 1;
-            }
         }
 
         if (lines.isEmpty()) {
@@ -254,18 +250,29 @@ public with sharing class GroundedRepliesVoiceController {
             return collapseWhitespace(normalizedTranscript);
         }
 
-        List<String> endUserMessages = new List<String>();
-        for (Integer i = lastAgentLineIndex + 1; i < lines.size(); i++) {
-            if (detectActorType(lines[i]) != 'customer') {
+        List<String> currentCustomerBlock = new List<String>();
+        List<String> lastCustomerBlock = new List<String>();
+        for (String line : lines) {
+            String actorType = detectActorType(line);
+            if (actorType == 'customer') {
+                String message = extractMessageText(line);
+                if (String.isNotBlank(message)) {
+                    currentCustomerBlock.add(message);
+                }
                 continue;
             }
-            String message = extractMessageText(lines[i]);
-            if (String.isNotBlank(message)) {
-                endUserMessages.add(message);
+
+            if (!currentCustomerBlock.isEmpty()) {
+                lastCustomerBlock = new List<String>(currentCustomerBlock);
+                currentCustomerBlock.clear();
             }
         }
 
-        return collapseWhitespace(String.join(endUserMessages, ' '));
+        if (!currentCustomerBlock.isEmpty()) {
+            lastCustomerBlock = currentCustomerBlock;
+        }
+
+        return collapseWhitespace(String.join(lastCustomerBlock, ' '));
     }
 
     private static String normalizeTranscriptText(String transcript) {
@@ -402,6 +409,7 @@ public with sharing class GroundedRepliesVoiceController {
         }
 
         Map<String, Object> root = (Map<String, Object>) parsed;
+
         if (!root.containsKey('responses') || !(root.get('responses') instanceof List<Object>)) {
             RecommendationItem fallback = new RecommendationItem();
             fallback.text = rawResponse;
@@ -416,6 +424,12 @@ public with sharing class GroundedRepliesVoiceController {
             Map<String, Object> responseItem = (Map<String, Object>) row;
             RecommendationItem recommendation = new RecommendationItem();
             recommendation.text = readString(responseItem, 'response');
+            if (String.isBlank(recommendation.text)) {
+                recommendation.text = readString(responseItem, 'response1');
+            }
+            if (String.isBlank(recommendation.text)) {
+                recommendation.text = readString(responseItem, 'response2');
+            }
             if (responseItem.containsKey('source') && responseItem.get('source') instanceof Map<String, Object>) {
                 Map<String, Object> source = (Map<String, Object>) responseItem.get('source');
                 recommendation.sourceRecordId = readString(source, 'sourceRecordId');

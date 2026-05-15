@@ -9,7 +9,7 @@ Componente reutilizavel para recomendacoes de resposta em tempo real em `VoiceCa
 - Contador de palavras por delta de transcricao.
 - Fallback por polling de transcricao quando eventos em tempo real nao chegam.
 - Integracao com Prompt Template via Flows.
-- Search query contextual para grounding (falas do EndUser apos a ultima resposta do agente).
+- Search query contextual para grounding (ultimo bloco de falas do EndUser).
 - Logging separado entre debug visual no card e `System.debug` no Apex.
 
 ## Arquitetura
@@ -73,22 +73,24 @@ O parser espera o formato:
 {
   "responses": [
     {
-      "response": "<answer 1>",
+      "response1": "<answer 1>",
       "source": {
-        "sourceRecordId": "<sourceRecordId>",
+        "sourceRecordId": "<value related to fieldApiKey SourceRecordId__c; must start with ka0>",
         "dataSourceObject": "<dataSourceObject>"
       }
     },
     {
-      "response": "<answer 2>",
+      "response2": "<answer 2>",
       "source": {
-        "sourceRecordId": "<sourceRecordId>",
+        "sourceRecordId": "<value related to fieldApiKey SourceRecordId__c; must start with ka0>",
         "dataSourceObject": "<dataSourceObject>"
       }
     }
   ]
 }
 ```
+
+Compatibilidade: o parser tambem aceita `response` (legado) em cada item de `responses[]`.
 
 ## Dependencias e prerequisitos
 
@@ -175,9 +177,68 @@ Checklist de validacao dos Prompts:
 O Apex envia ao Flow de grounding:
 
 - `transcript`: transcricao completa da chamada (mantida para contexto total).
-- `SearchQuery`: somente falas do `EndUser` apos a ultima fala detectada do agente humano.
+- `SearchQuery`: sempre o ultimo bloco continuo de falas do `EndUser`, mesmo quando as ultimas mensagens da transcricao sao do agente.
 
 Se a transcricao nao vier com marcacao de ator reconhecivel, o fallback e usar o texto normalizado disponivel.
+
+### 3.2) Referencia da org `wallace` (versao atual)
+
+#### Flow bridge ativo
+
+- Flow: `Voice_Grounded_Replies_Bridge` (`force-app/main/default/flows/Voice_Grounded_Replies_Bridge.flow-meta.xml`)
+- Tipo: `AutoLaunchedFlow`
+- Status: `Active`
+- Prompt chamado na acao `Get_Grounded_Recommendation`: `Grounded_Service_Reply_Voice_Monitor`
+- Log no objeto customizado: `Voice_Service_Reply__c` (elemento `Registra_log`)
+
+Campos preenchidos no log pelo flow:
+
+- `Voice_Call__c` <- `recordId`
+- `Search_Query__c` <- `SearchQuery`
+- `Answer_1__c` <- formula `Response1`
+- `Answer_2__c` <- formula `Response2`
+
+#### Objeto customizado de log usado no bridge
+
+- Objeto: `Voice_Service_Reply__c`
+- Label: `Voice Service Reply`
+- Finalidade: persistir o log de entrada e saidas do bridge de grounding por chamada de voz
+
+Campos do objeto:
+
+- `Voice_Call__c`: Lookup para `VoiceCall`
+- `Search_Query__c`: Long Text Area (2000)
+- `Answer_1__c`: Long Text Area (1000)
+- `Answer_2__c`: Long Text Area (1000)
+
+#### Prompt de referencia (ultima versao `wallace`)
+
+Arquivo de metadata: `package-src/main/default/genAiPromptTemplates/Post_Call_Voice_Sentiment_Analysis.genAiPromptTemplate-meta.xml`
+
+Conteudo da versao atual:
+
+```text
+Voce e um classificador de sentimento para atendimento por voz.
+Analise a transcricao da conversa entre cliente e atendente e classifique APENAS o sentimento do cliente.
+
+Categorias permitidas:
+- positivo
+- neutro
+- negativo
+
+Regras obrigatorias:
+1) Retorne exatamente um objeto JSON valido.
+2) Nao inclua texto fora do JSON.
+3) Use este formato:
+{
+  "sentiment": "<positivo|neutro|negativo>"
+}
+
+Considere o contexto geral da conversa e priorize os trechos falados pelo cliente.
+
+TRANSCRICAO:
+{!$Input:Transcript}
+```
 
 ### 4) Ordem correta de implantacao (essencial)
 
@@ -239,6 +300,8 @@ Esse script executa:
   - `Voice_Grounded_Replies_Bridge` (Flow)
   - `Grounded_Service_Reply_Voice_Monitor` (Prompt Template)
   - `OnCall_Sentiment_Analysis` (Prompt Template)
+  - `Post_Call_Voice_Sentiment_Analysis` (Prompt Template)
+  - `Voice_Service_Reply__c` (Custom Object de log do bridge)
 - validacao basica dos FlowDefinitions implantados.
 
 ## Troubleshooting rapido

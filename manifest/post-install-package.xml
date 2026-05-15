@@ -8,7 +8,12 @@
     <types>
         <members>Grounded_Service_Reply_Voice_Monitor</members>
         <members>OnCall_Sentiment_Analysis</members>
+        <members>Post_Call_Voice_Sentiment_Analysis</members>
         <name>GenAiPromptTemplate</name>
+    </types>
+    <types>
+        <members>Voice_Service_Reply__c</members>
+        <name>CustomObject</name>
     </types>
     <version>66.0</version>
 </Package>

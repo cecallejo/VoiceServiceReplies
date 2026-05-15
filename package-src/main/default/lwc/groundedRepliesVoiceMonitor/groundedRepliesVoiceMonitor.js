@@ -315,8 +315,20 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
     applyRecommendationResponse(response) {
         const transcriptLog = response?.transcript || '';
         const searchQueryLog = response?.searchQuery || '';
+        const rawPromptResponse = response?.rawPromptResponse || '';
+        const incomingRecommendationCount = Array.isArray(response?.recommendations) ? response.recommendations.length : 0;
         this.logDebug(`Transcricao completa enviada ao flow de grounding: ${transcriptLog}`);
         this.logDebug(`SearchQuery enviada ao flow de grounding: ${searchQueryLog}`);
+        this.logDebug(
+            `Grounding retorno: success=${response?.success ? 'sim' : 'nao'}, promptLength=${rawPromptResponse.length}, recommendations=${incomingRecommendationCount}.`
+        );
+
+        if (!rawPromptResponse.trim()) {
+            this.logDebug(
+                `Prompt response vazio/branco (length=${rawPromptResponse.length}). Mantendo ${this.recommendations.length} recomendacoes anteriores sem exibir erro.`
+            );
+            return;
+        }
 
         if (!response?.success) {
             this.errorMessage = response?.errorMessage || 'Nao foi possivel gerar recomendacoes.';
@@ -324,7 +336,7 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
             return;
         }
 
-        this.recommendations = (response.recommendations || []).map((item, index) => ({
+        const mappedRecommendations = (response.recommendations || []).map((item, index) => ({
             ...item,
             rowKey: `${item.sourceRecordId || 'no-source'}-${index}`,
             knowledgeTooltip: item.articleTitle
@@ -335,6 +347,14 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
             isKnowledgeLinkable: item.sourceRecordId?.startsWith('ka0'),
             disableKnowledgeButton: !item.sourceRecordId?.startsWith('ka0')
         }));
+        if (!mappedRecommendations.length) {
+            this.logDebug(
+                `Nenhuma recomendacao valida apos mapeamento (recebidas=${incomingRecommendationCount}). Mantendo ${this.recommendations.length} recomendacoes anteriores sem exibir erro.`
+            );
+            return;
+        }
+
+        this.recommendations = mappedRecommendations;
         this.logDebug(`Recomendacoes geradas com sucesso: ${this.recommendations.length}.`);
     }
 

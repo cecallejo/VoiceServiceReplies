@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiPromptTemplate xmlns="http://soap.sforce.com/2006/04/metadata">
+    <activeVersionIdentifier>gpgqkg/cMbrnMyrrrZndwRflAraPZHQMGOoTfQXlU6Y=_2</activeVersionIdentifier>
+    <developerName>Post_Call_Voice_Sentiment_Analysis</developerName>
+    <masterLabel>Call Sentiment Analysis</masterLabel>
+    <templateVersions>
+        <content>Voce e um classificador de sentimento para atendimento por voz.
+Analise a transcricao da conversa entre cliente e atendente e classifique APENAS o sentimento do cliente.
+
+Categorias permitidas:
+- positivo
+- neutro
+- negativo
+
+Regras obrigatorias:
+1) Retorne exatamente um objeto JSON valido.
+2) Nao inclua texto fora do JSON.
+3) Use este formato:
+{
+  &quot;sentiment&quot;: &quot;&lt;positivo|neutro|negativo&gt;&quot;
+}
+
+Considere o contexto geral da conversa e priorize os trechos falados pelo cliente.
+
+TRANSCRICAO:
+{!$Input:Transcript}</content>
+        <inputs>
+            <apiName>Transcript</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>Transcript</masterLabel>
+            <referenceName>Input:Transcript</referenceName>
+            <required>true</required>
+        </inputs>
+        <inputs>
+            <apiName>VoiceCall</apiName>
+            <definition>SOBJECT://VoiceCall</definition>
+            <masterLabel>VoiceCall</masterLabel>
+            <referenceName>Input:VoiceCall</referenceName>
+            <required>false</required>
+        </inputs>
+        <primaryModel>sfdc_ai__DefaultGPT5Mini</primaryModel>
+        <status>Published</status>
+        <versionIdentifier>xlJgOmBaVNAzJ8BzYYwCC2Rb0FSHB/Xx7tqrE4SmMAA=_1</versionIdentifier>
+    </templateVersions>
+    <templateVersions>
+        <content>Voce e um classificador de sentimento para atendimento por voz.
+Analise a transcricao da conversa entre cliente e atendente e classifique APENAS o sentimento do cliente.
+
+Categorias permitidas:
+- positivo
+- neutro
+- negativo
+
+Regras obrigatorias:
+1) Retorne exatamente um objeto JSON valido.
+2) Nao inclua texto fora do JSON.
+3) Use este formato:
+{
+  &quot;sentiment&quot;: &quot;&lt;positivo|neutro|negativo&gt;&quot;
+}
+
+Considere o contexto geral da conversa e priorize os trechos falados pelo cliente.
+
+TRANSCRICAO:
+{!$Input:Transcript}</content>
+        <inputs>
+            <apiName>Transcript</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>Transcript</masterLabel>
+            <referenceName>Input:Transcript</referenceName>
+            <required>true</required>
+        </inputs>
+        <inputs>
+            <apiName>VoiceCall</apiName>
+            <definition>SOBJECT://VoiceCall</definition>
+            <masterLabel>VoiceCall</masterLabel>
+            <referenceName>Input:VoiceCall</referenceName>
+            <required>false</required>
+        </inputs>
+        <primaryModel>sfdc_ai__DefaultGPT4OmniMini</primaryModel>
+        <status>Published</status>
+        <versionIdentifier>gpgqkg/cMbrnMyrrrZndwRflAraPZHQMGOoTfQXlU6Y=_2</versionIdentifier>
+    </templateVersions>
+    <type>einstein_gpt__flex</type>
+    <visibility>Global</visibility>
+</GenAiPromptTemplate>

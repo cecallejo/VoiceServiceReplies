@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>All_Voice_Calls</fullName>
+    <columns>CREATED_DATE</columns>
+    <columns>Voice_Call__c</columns>
+    <columns>Search_Query__c</columns>
+    <columns>Answer_1__c</columns>
+    <columns>Answer_2__c</columns>
+    <filterScope>Mine</filterScope>
+    <label>All Voice Calls</label>
+</ListView>

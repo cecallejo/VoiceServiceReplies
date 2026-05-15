@@ -37,5 +37,6 @@ sf data query \
 
 echo "==> Processo concluido."
 echo "Checklist manual:"
-echo "  1) Confirmar Prompt Templates Grounded_Service_Reply_Voice_Monitor e OnCall_Sentiment_Analysis com versao ativa/publicada."
-echo "  2) Adicionar o componente Grounded Replies Voice Monitor na Lightning Record Page de VoiceCall."
+echo "  1) Confirmar Prompt Templates Grounded_Service_Reply_Voice_Monitor, OnCall_Sentiment_Analysis e Post_Call_Voice_Sentiment_Analysis com versao ativa/publicada."
+echo "  2) Confirmar objeto de log Voice_Service_Reply__c e campos (Voice_Call__c, Search_Query__c, Answer_1__c, Answer_2__c)."
+echo "  3) Adicionar o componente Grounded Replies Voice Monitor na Lightning Record Page de VoiceCall."
