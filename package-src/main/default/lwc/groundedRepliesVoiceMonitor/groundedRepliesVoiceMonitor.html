@@ -33,11 +33,10 @@
             <div class="status-panel slds-m-bottom_medium">
                 <div class="contador-bloco">
                     <span class="contador-label">Sentimento</span>
-                    <span class={sentimentoBadgeClasse} title={sentimentoTooltip}>{sentimentoLabel}</span>
-                </div>
-                <div class="contador-bloco">
-                    <span class="contador-label">Palavras</span>
-                    <span class="contador-valor">{wordCounter}</span>
+                    <span class={sentimentoBadgeClasse} title={sentimentoTooltip}>
+                        <span aria-hidden="true">{sentimentoEmoji}</span>
+                        <span class="slds-m-left_xx-small">{sentimentoLabel}</span>
+                    </span>
                 </div>
             </div>
             <div class="barra-progresso slds-m-bottom_medium">
@@ -100,11 +99,67 @@
                         </li>
                     </template>
                 </ul>
+
+                <div class="feedback-panel slds-m-top_small">
+                    <span class="feedback-label">Essas sugestoes ajudaram?</span>
+                    <lightning-button-icon
+                        icon-name="utility:like"
+                        alternative-text="Feedback positivo"
+                        title="Feedback positivo"
+                        onclick={handleThumbsUp}
+                        disabled={feedbackDisabled}
+                        variant={thumbsUpVariant}
+                        class="slds-m-left_x-small"
+                    ></lightning-button-icon>
+                    <lightning-button-icon
+                        icon-name="utility:dislike"
+                        alternative-text="Feedback negativo"
+                        title="Feedback negativo"
+                        onclick={handleThumbsDown}
+                        disabled={feedbackDisabled}
+                        variant={thumbsDownVariant}
+                        class="slds-m-left_x-small"
+                    ></lightning-button-icon>
+                </div>
             </template>
 
             <template if:false={recommendations.length}>
                 <p class="slds-text-color_weak">Aguardando conteúdo para gerar recomendações grounded.</p>
             </template>
         </div>
+
+        <template if:true={showNegativeFeedbackModal}>
+            <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <h2 class="slds-modal__title slds-hyphenate">Feedback negativo</h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium">
+                        <p class="slds-m-bottom_small">Selecione os motivos:</p>
+                        <lightning-checkbox-group
+                            options={negativeFeedbackOptions}
+                            value={selectedNegativeReasons}
+                            onchange={handleNegativeReasonChange}
+                        ></lightning-checkbox-group>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning-button
+                            variant="neutral"
+                            label="Cancelar"
+                            onclick={closeNegativeFeedbackModal}
+                            disabled={isSavingFeedback}
+                        ></lightning-button>
+                        <lightning-button
+                            variant="brand"
+                            label="Enviar feedback"
+                            class="slds-m-left_small"
+                            onclick={confirmNegativeFeedback}
+                            disabled={isSavingFeedback}
+                        ></lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
     </lightning-card>
 </template>

@@ -11,6 +11,7 @@ Componente reutilizavel para recomendacoes de resposta em tempo real em `VoiceCa
 - Integracao com Prompt Template via Flows.
 - Search query contextual para grounding (ultimo bloco de falas do EndUser).
 - Logging separado entre debug visual no card e `System.debug` no Apex.
+- Coleta de feedback no card (`thumbs up/down`) com motivos para feedback negativo.
 
 ## Arquitetura
 
@@ -33,13 +34,13 @@ Componente reutilizavel para recomendacoes de resposta em tempo real em `VoiceCa
 
 1. O LWC recebe eventos de voz (`lightning-service-cloud-voice-toolkit-api`) quando disponiveis.
 2. Em paralelo, roda polling configuravel (`transcriptPollIntervalMs`) via `Get_Voice_Call_Transcript`.
-3. O texto novo (delta) e contabilizado no contador.
+3. O texto novo (delta) e contabilizado internamente.
 4. Ao atingir `batchWordThreshold`, o LWC chama Apex.
 5. Apex executa:
    - `Get_Voice_Call_Transcript` para transcricao atual.
    - calculo de `SearchQuery` com base no trecho relevante do EndUser.
    - `Voice_Grounded_Replies_Bridge` para gerar resposta grounded.
-6. O LWC renderiza recomendacoes e links de Knowledge.
+6. O LWC renderiza recomendacoes, links de Knowledge e feedback (`thumbs up/down`).
 7. Em paralelo, o Apex executa o prompt de sentimento (`OnCall_Sentiment_Analysis`).
 
 ## Configuracao no App Builder (VoiceCall)
@@ -52,7 +53,7 @@ Propriedades principais:
 - `Allow Pause/Resume`: habilita modo pausar/retomar.
 - `Require Start Button`: exige clique em iniciar.
 - `Include Service Rep Messages`: inclui falas do agente humano.
-- `Word Batch Threshold`: gatilho de palavras para gerar recomendacoes.
+- `Word Batch Threshold`: gatilho interno de palavras para gerar recomendacoes (exibido apenas na barra de progresso visual).
 - `Transcript Poll Interval (ms)`: intervalo de polling da transcricao.
 - `Modo de depuracao`: mostra painel de logs no card.
 - `Apex Log Mode`: habilita logs de servidor via `System.debug` (independente do debug visual).
@@ -210,6 +211,10 @@ Campos do objeto:
 - `Search_Query__c`: Long Text Area (2000)
 - `Answer_1__c`: Long Text Area (1000)
 - `Answer_2__c`: Long Text Area (1000)
+- `Feedback_Status__c`: Picklist (`UP` | `DOWN`)
+- `Feedback_Reasons__c`: Long Text Area (1000)
+- `Feedback_At__c`: DateTime
+- `Feedback_By__c`: Lookup para `User`
 
 #### Prompt de referencia (ultima versao `wallace`)
 

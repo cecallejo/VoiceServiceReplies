@@ -73,7 +73,7 @@ Opcao via URL do instalador (pacote base com LWC + Apex):
 - Producao/Developer Edition: `https://login.salesforce.com/packaging/installPackage.apexp?p0=04tHp000001Rd16IAC`
 - Sandbox: `https://test.salesforce.com/packaging/installPackage.apexp?p0=04tHp000001Rd16IAC`
 
-> Importante: a URL instala apenas o pacote base. Para completar a instalacao (Flows + Prompts + objeto de log), rode o deploy complementar via `manifest/post-install-package.xml` ou use `./scripts/install_full_asset.sh <alias-org-destino>`.
+> Importante: a URL instala apenas o pacote base. Para completar a instalacao (Flows + Prompts + objeto de log com campos de feedback), rode o deploy complementar via `manifest/post-install-package.xml` ou use `./scripts/install_full_asset.sh <alias-org-destino>`.
 
 ## 6) Pos-instalacao
 
@@ -88,6 +88,7 @@ Na org destino:
   - `Post_Call_Voice_Sentiment_Analysis`
 - Verifique se o objeto de log do bridge existe:
   - `Voice_Service_Reply__c`
+  - com campos de feedback (`Feedback_Status__c`, `Feedback_Reasons__c`, `Feedback_At__c`, `Feedback_By__c`)
 - Adicione `Grounded Replies Voice Monitor` na Lightning Record Page de `VoiceCall`.
 - Ajuste propriedades do componente conforme necessidade.
 
@@ -128,6 +129,7 @@ Use este guia quando houver ajustes de comportamento entre versoes, ou quando o 
 - [ ] O Prompt `OnCall_Sentiment_Analysis` recebe `Input:Transcript` e retorna JSON com `sentiment`.
 - [ ] O Prompt `Post_Call_Voice_Sentiment_Analysis` esta publicado e com versao ativa.
 - [ ] O objeto `Voice_Service_Reply__c` esta presente para logging do bridge.
+- [ ] O objeto `Voice_Service_Reply__c` contem os campos de feedback esperados.
 - [ ] O JSON contem `responses[]`, cada item com `response` e `source`.
 - [ ] O Flow esta `Active`.
 - [ ] O Prompt esta `Published` e com versao ativa.

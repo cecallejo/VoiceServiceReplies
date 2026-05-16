@@ -190,3 +190,14 @@
     cursor: not-allowed;
     text-decoration: none;
 }
+
+.feedback-panel {
+    display: flex;
+    align-items: center;
+}
+
+.feedback-label {
+    font-size: 0.75rem;
+    color: var(--lwc-colorTextLabel, #444);
+    font-weight: 600;
+}

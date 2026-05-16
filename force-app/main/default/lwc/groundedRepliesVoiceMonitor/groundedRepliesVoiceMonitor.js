@@ -3,11 +3,22 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import fetchTranscript from '@salesforce/apex/GroundedRepliesVoiceController.fetchTranscript';
 import generateRepliesFromTranscript from '@salesforce/apex/GroundedRepliesVoiceController.generateRepliesFromTranscript';
 import analyzeSentimentFromTranscript from '@salesforce/apex/GroundedRepliesVoiceController.analyzeSentimentFromTranscript';
+import saveReplyFeedback from '@salesforce/apex/GroundedRepliesVoiceController.saveReplyFeedback';
 
 const STATE_NOT_STARTED = 'not_started';
 const STATE_LISTENING = 'listening';
 const STATE_PAUSED = 'paused';
 const DEFAULT_BATCH_THRESHOLD = 50;
+const FEEDBACK_UP = 'UP';
+const FEEDBACK_DOWN = 'DOWN';
+
+const NEGATIVE_FEEDBACK_OPTIONS = [
+    { label: 'Nao relevante para o contexto', value: 'NOT_RELEVANT' },
+    { label: 'Resposta incorreta', value: 'INCORRECT' },
+    { label: 'Resposta incompleta', value: 'INCOMPLETE' },
+    { label: 'Tom inadequado', value: 'WRONG_TONE' },
+    { label: 'Nao aplicavel para o cliente', value: 'NOT_APPLICABLE' }
+];
 
 export default class GroundedRepliesVoiceMonitor extends LightningElement {
     @api recordId;
@@ -49,6 +60,10 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
     @track sentiment = 'indefinido';
     @track lastTranscriptPreview;
     @track debugLogs = [];
+    @track feedbackStatus;
+    @track selectedNegativeReasons = [];
+    @track showNegativeFeedbackModal = false;
+    @track isSavingFeedback = false;
 
     transcriptBuffer = '';
     wordCount = 0;
@@ -57,6 +72,7 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
     pollTimer;
     lastTranscriptSnapshot = '';
     lastEventTimestamp = 0;
+    currentLogRecordId;
 
     connectedCallback() {
         if (!this.requireStartButton) {
@@ -98,6 +114,30 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
         return this.isLoadingReplies || this.isLoadingSentiment;
     }
 
+    get feedbackDisabled() {
+        return !this.currentLogRecordId || this.isSavingFeedback || this.isLoadingReplies;
+    }
+
+    get isThumbsUpSelected() {
+        return this.feedbackStatus === FEEDBACK_UP;
+    }
+
+    get isThumbsDownSelected() {
+        return this.feedbackStatus === FEEDBACK_DOWN;
+    }
+
+    get thumbsUpVariant() {
+        return this.isThumbsUpSelected ? 'border-filled' : 'border';
+    }
+
+    get thumbsDownVariant() {
+        return this.isThumbsDownSelected ? 'border-filled' : 'border';
+    }
+
+    get negativeFeedbackOptions() {
+        return NEGATIVE_FEEDBACK_OPTIONS;
+    }
+
     get estadoLabel() {
         if (this.listeningState === STATE_NOT_STARTED) return 'Nao iniciado';
         if (this.listeningState === STATE_LISTENING) return 'Iniciado';
@@ -122,6 +162,13 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
         if (this.sentiment === 'negativo') return 'status-badge status-badge-vermelho';
         if (this.sentiment === 'neutro') return 'status-badge status-badge-amarelo';
         return 'status-badge status-badge-amarelo';
+    }
+
+    get sentimentoEmoji() {
+        if (this.sentiment === 'positivo') return '🙂';
+        if (this.sentiment === 'negativo') return '🙁';
+        if (this.sentiment === 'neutro') return '😐';
+        return '😐';
     }
 
     get sentimentoTooltip() {
@@ -322,10 +369,11 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
         const searchQueryLog = response?.searchQuery || '';
         const rawPromptResponse = response?.rawPromptResponse || '';
         const incomingRecommendationCount = Array.isArray(response?.recommendations) ? response.recommendations.length : 0;
+        this.currentLogRecordId = response?.logRecordId || this.currentLogRecordId;
         this.logDebug(`Transcricao completa enviada ao flow de grounding: ${transcriptLog}`);
         this.logDebug(`SearchQuery enviada ao flow de grounding: ${searchQueryLog}`);
         this.logDebug(
-            `Grounding retorno: success=${response?.success ? 'sim' : 'nao'}, promptLength=${rawPromptResponse.length}, recommendations=${incomingRecommendationCount}.`
+            `Grounding retorno: success=${response?.success ? 'sim' : 'nao'}, promptLength=${rawPromptResponse.length}, recommendations=${incomingRecommendationCount}, logRecordId=${this.currentLogRecordId || 'n/a'}.`
         );
 
         if (!rawPromptResponse.trim()) {
@@ -360,6 +408,9 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
         }
 
         this.recommendations = mappedRecommendations;
+        this.feedbackStatus = null;
+        this.selectedNegativeReasons = [];
+        this.showNegativeFeedbackModal = false;
         this.logDebug(`Recomendacoes geradas com sucesso: ${this.recommendations.length}.`);
     }
 
@@ -647,5 +698,71 @@ export default class GroundedRepliesVoiceMonitor extends LightningElement {
         }
 
         window.open(`/lightning/r/Knowledge__kav/${articleId}/view`, '_blank');
+    }
+
+    handleThumbsUp() {
+        this.persistFeedback(FEEDBACK_UP, []);
+    }
+
+    handleThumbsDown() {
+        if (!this.currentLogRecordId) {
+            this.showToast('Feedback', 'Nao ha log disponivel para registrar feedback.', 'warning');
+            return;
+        }
+        this.showNegativeFeedbackModal = true;
+    }
+
+    handleNegativeReasonChange(event) {
+        this.selectedNegativeReasons = event.detail?.value || [];
+    }
+
+    closeNegativeFeedbackModal() {
+        if (this.isSavingFeedback) {
+            return;
+        }
+        this.showNegativeFeedbackModal = false;
+    }
+
+    confirmNegativeFeedback() {
+        this.persistFeedback(FEEDBACK_DOWN, this.selectedNegativeReasons);
+    }
+
+    async persistFeedback(status, reasons) {
+        if (!this.currentLogRecordId || this.isSavingFeedback) {
+            return;
+        }
+
+        this.isSavingFeedback = true;
+        try {
+            await saveReplyFeedback({
+                logRecordId: this.currentLogRecordId,
+                feedbackStatus: status,
+                feedbackReasons: reasons || []
+            });
+
+            this.feedbackStatus = status;
+            this.selectedNegativeReasons = status === FEEDBACK_DOWN ? [...(reasons || [])] : [];
+            this.showNegativeFeedbackModal = false;
+            this.logDebug(
+                `Feedback registrado com sucesso: status=${status}, reasons=${(reasons || []).join('|') || 'none'}.`
+            );
+            this.showToast('Feedback', 'Obrigado pelo feedback!', 'success');
+        } catch (error) {
+            const message = error?.body?.message || error?.message || 'Falha ao registrar feedback.';
+            this.logDebug(`Falha ao registrar feedback: ${message}`);
+            this.showToast('Erro', message, 'error');
+        } finally {
+            this.isSavingFeedback = false;
+        }
+    }
+
+    showToast(title, message, variant) {
+        this.dispatchEvent(
+            new ShowToastEvent({
+                title,
+                message,
+                variant
+            })
+        );
     }
 }

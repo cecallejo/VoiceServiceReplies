@@ -10,6 +10,7 @@ public with sharing class GroundedRepliesVoiceController {
         @AuraEnabled public Boolean success;
         @AuraEnabled public String transcript;
         @AuraEnabled public String searchQuery;
+        @AuraEnabled public Id logRecordId;
         @AuraEnabled public String rawPromptResponse;
         @AuraEnabled public List<RecommendationItem> recommendations;
         @AuraEnabled public String errorMessage;
@@ -95,6 +96,7 @@ public with sharing class GroundedRepliesVoiceController {
             String promptResponse = runGroundingFlow(voiceCallId, transcript, searchQuery, groundingFlowName);
             result.rawPromptResponse = promptResponse;
             result.recommendations = parseRecommendations(promptResponse);
+            result.logRecordId = upsertReplyLog(voiceCallId, searchQuery, result.recommendations);
             logGroundingPayload(enableApexLogs, transcript, searchQuery, result.recommendations);
             result.success = true;
         } catch (Exception e) {
@@ -102,6 +104,42 @@ public with sharing class GroundedRepliesVoiceController {
         }
 
         return result;
+    }
+
+    @AuraEnabled
+    public static void saveReplyFeedback(
+        Id logRecordId,
+        String feedbackStatus,
+        List<String> feedbackReasons
+    ) {
+        if (logRecordId == null) {
+            throw new AuraHandledException('Log record Id is required.');
+        }
+
+        String normalizedStatus = String.isBlank(feedbackStatus) ? null : feedbackStatus.trim().toUpperCase();
+        if (normalizedStatus != 'UP' && normalizedStatus != 'DOWN') {
+            throw new AuraHandledException('Feedback status must be UP or DOWN.');
+        }
+
+        String reasonsValue = '';
+        if (feedbackReasons != null && !feedbackReasons.isEmpty()) {
+            List<String> sanitizedReasons = new List<String>();
+            for (String reason : feedbackReasons) {
+                if (String.isNotBlank(reason)) {
+                    sanitizedReasons.add(reason.trim());
+                }
+            }
+            reasonsValue = String.join(sanitizedReasons, ';');
+        }
+
+        Voice_Service_Reply__c replyLog = new Voice_Service_Reply__c(
+            Id = logRecordId,
+            Feedback_Status__c = normalizedStatus,
+            Feedback_Reasons__c = reasonsValue,
+            Feedback_At__c = System.now(),
+            Feedback_By__c = UserInfo.getUserId()
+        );
+        update replyLog;
     }
 
     private static void logGroundingPayload(
@@ -344,6 +382,30 @@ public with sharing class GroundedRepliesVoiceController {
 
     private static String collapseWhitespace(String value) {
         return String.isBlank(value) ? '' : value.replaceAll('\\s+', ' ').trim();
+    }
+
+    private static Id upsertReplyLog(
+        Id voiceCallId,
+        String searchQuery,
+        List<RecommendationItem> recommendations
+    ) {
+        String answer1 = null;
+        String answer2 = null;
+        if (recommendations != null && !recommendations.isEmpty()) {
+            answer1 = recommendations[0].text;
+            if (recommendations.size() > 1) {
+                answer2 = recommendations[1].text;
+            }
+        }
+
+        Voice_Service_Reply__c replyLog = new Voice_Service_Reply__c(
+            Voice_Call__c = voiceCallId,
+            Search_Query__c = searchQuery,
+            Answer_1__c = answer1,
+            Answer_2__c = answer2
+        );
+        insert replyLog;
+        return replyLog.Id;
     }
 
     private static String runSentimentPrompt(Id voiceCallId, String transcript, String promptName) {

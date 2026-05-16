@@ -9,7 +9,7 @@
       "default": false,
       "package": "VoiceServiceReplies",
       "versionName": "ver 2.0",
-      "versionNumber": "2.0.0.NEXT"
+      "versionNumber": "2.0.1.NEXT"
     }
   ],
   "name": "voice_service_replies",
